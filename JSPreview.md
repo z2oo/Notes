@@ -1,3 +1,4 @@
+# JSP
 JSP(Java Server Page)和Servlet是JavaEE规范的两个基本成员。  
 
 JSP和Servlet的本质是一样的，因为JSP最终必须编译成Servlet才能运行，或者说JSP只是生成Servlet的“草稿”文件。  
@@ -13,7 +14,7 @@ Web应用应该有如下结构：　　
 |——<a.jsp>----此处可以存放任意多个JSP页面
   
   
-## JSP的基本原理
+# JSP的基本原理
 JSP的本质是Servlet，当用户向指定Servlet发送请求时，Servlet利用输出流动态生成HTMl页面，包括每一个静态的HTML标签和所有在HTML页面中出现的内容。  
 由于包括大量的HTML标签、大量的静态文本及格式等，导致Servlet的开发效率极为低下。所有的表现逻辑，包括布局、色彩及图像等，都必须耦合在Java代码中，这的确让人不胜其烦。JSP的出现弥补了各种不足。  
 JSP通过在标准的HTML页面中嵌入Java代码，其静态的部分无须Java程序控制，只有那些需要从数据库读取或需要动态生成的页面内容，才使用Java脚本控制。  
@@ -36,15 +37,15 @@ Tomcat根据JSP页面生成对应Servlet的Java文件和class文件。
 
 所以，其实JSP页面的所有内容都由这个java文件的页面输出流来生成。  
 
-### 结论
+## 结论
 - JSP文件必须在JSP服务器内运行。
 - JSP文件必须生成Servlet才能执行。
 - 每个JSP页面的第一个访问者速度很慢，因为必须等待JSP编译成Servlet。
 - JSP页面的访问者无须安装任何客户端，甚至不需要可以运行Java的运行环境，因为JSP页面输送到客户端的是标准HTMl页面。  
   
 
-## JSp的4中基本语法
-### JSP注释
+# JSp的4中基本语法
+## JSP注释
 JSP注释的格式：
 ```
 <%-- 注释内容 --%>
@@ -55,7 +56,7 @@ HTMl注释的格式：
 ```
 HTML的注释可以通过源代码查看到，而JSP的注释是无法通过源代码查看到的。这表明JSP注释不会被发送到客户端。  
 
-### JSP声明
+## JSP声明
 JSP声明用于声明变量和方法。在JSP声明中声明方法看起来很特别，似乎不需要定义类就可以直接定义方法。  
 实际上，JSP声明将会转换成对应Servlet的成员变量或成员方法，因此JSP声明依然符合java语法。  
 JSP声明的语法格式如下：
@@ -70,7 +71,7 @@ JSP页面会编译成一个Servlet类，每个Servlet在容器中只有一个实
 
 JSP声明的方法其实是JSP编译中生成的Servlet的实例方法——Java里的方法是不能独立的，即使在JSP页面中也不行。   
 
-## 输出JSP表达式
+# 输出JSP表达式
 语法格式：
 ```
 <%=表达式%>
@@ -80,7 +81,7 @@ JSP声明的方法其实是JSP编译中生成的Servlet的实例方法——Java
 > 注意：
 **输出表达式语法后不能有分号**
 
-## JSP脚本
+# JSP脚本
 格式：
 ```
 <% java代码%>
@@ -93,7 +94,7 @@ JSP脚本将转换成Servlet里Service方法的可执行性代码。这意味着
 因为JSP脚本中可以放置任何可执行性语句，所以可以利用Java语言功能，例如连接数据库和执行数据库操作。  
 
 
-## JSP的3个编译指令
+# JSP的3个编译指令
 常见的编译指令有如下三个：
 - page：该指令是针对当前页面的指令。
 - include：用于指定包含另一个页面。
@@ -105,7 +106,7 @@ JSP脚本将转换成Servlet里Service方法的可执行性代码。这意味着
 <%@ 编译指令名 属性名="属性值"···%>
 ```
 
-### page指令
+## page指令
 page指令通常位于JSP页面的顶端，一个JSP页面可以使用多条page指令。  
 page指令语法格式如下：
 ```
@@ -124,28 +125,28 @@ page指令语法格式如下：
 %>
 ```
 个别属性意义：
-- Language：声明当前JSP页面使用的脚本语言的种类，因为页面是JSP页面，该属性的值通常是Java，该属性的默认值也是java，所以通常无须设置。  
+- **Language**：声明当前JSP页面使用的脚本语言的种类，因为页面是JSP页面，该属性的值通常是Java，该属性的默认值也是java，所以通常无须设置。  
 
-- extends：指定JSP页面编译所产生的Java类所继承的父类，或所实现的接口。  
-- import：用来导入包。不需显式导入的包有：java.lang.\*、javax.servlet.\*、javax.servlet.jsp.\*、javas.ervlet.http.*  
+- **extends**：指定JSP页面编译所产生的Java类所继承的父类，或所实现的接口。  
+- **import**：用来导入包。不需显式导入的包有：java.lang.\*、javax.servlet.\*、javax.servlet.jsp.\*、javas.ervlet.http.*  
 
-- session：设定这个JSP页面是否需要HTTP Session。  
+- **session**：设定这个JSP页面是否需要HTTP Session。  
 
-- buffer：指定输出缓冲区的大小。out为输出缓冲区的JSP内部对象，用于缓存JSP页面对客户浏览器的输出，默认值为8KB。  
+- **buffer**：指定输出缓冲区的大小。out为输出缓冲区的JSP内部对象，用于缓存JSP页面对客户浏览器的输出，默认值为8KB。  
 
-- autoFlush：当输出缓冲区即将溢出时，是否需要强制输出缓冲区的内容。true为正常输出；false则会在溢出时产生一个异常。  
+- **autoFlush**：当输出缓冲区即将溢出时，是否需要强制输出缓冲区的内容。true为正常输出；false则会在溢出时产生一个异常。  
 
-- info：设置该JSP程序的信息。可以通过Servlet.getServletInfo()方法获取该值。如果在JSP页面中，可以直接调用getServletInfo()方法，因为JSP页面本身就是Servlet。  
+- **info**：设置该JSP程序的信息。可以通过Servlet.getServletInfo()方法获取该值。如果在JSP页面中，可以直接调用getServletInfo()方法，因为JSP页面本身就是Servlet。  
 
-- contentType：用于设定生成网页的文件格式和编码字符集，即MIME类型和页面字符集类型，默认的MIME类型是text/html：默认的字符集类型是ISO-8859-1.  
+- **contentType**：用于设定生成网页的文件格式和编码字符集，即MIME类型和页面字符集类型，默认的MIME类型是text/html：默认的字符集类型是ISO-8859-1.  
 
-- pageEncoding：指定生成网页的编码字符集。
+- **pageEncoding**：指定生成网页的编码字符集。
 
 > 提示：
 **errorPage属性的实质是JSP的异常处理机制，因为JSP內建了异常机制支持，所以JSP可以不处理异常，即使是checked异常。**
 
 
-### include指令
+## include指令
 使用include指令，可以将一个外部文件嵌入到当前JSP文件中，同时解析这个页面中的JSP语句（如果有的话）。这是个静态的include语句，它会把目标页面的其他编译指令也包含进来，但动态include则不会。  
 include既可以包含静态的文本，也可以包含动态的JSP页面。静态的include编译指令会将被包含的页面加入本页面，融合成一个页面，因此被包含页面甚至不是一个完整的页面。  
 
@@ -160,7 +161,7 @@ include指令的语法：
 **静态包含还会被包含页面的编译指令也包含进来，如果两个页面的编译指令冲突，那么页面就会出错。** 
 
 
-## JSP的7个动作指令
+# JSP的7个动作指令
 动作指令与编译指令不同，编译指令是通知Servlet引擎的处理消息，而动作指令只是运行时的动作。  
 编译指令在将JSP编译成Servlet时起作用；而处理指令通常可替换成JSP脚本，它只是JSP脚本的标准写法。  
   
@@ -173,7 +174,7 @@ JSP动作指令主要有如下7个：
 - jsp:setProperty  设置JavaBean实例的属性值
 - jsp:getProperty  获取JavaBean实例的属性值
 
-### forward指令
+## forward指令
 forward指令用于将页面响应转发到另外的页面。既可以转发到静态的HTML页面，也可以转发到动态的JSP页面，或者转发到容器中的Servlet。  
 forward指令格式：  
 对于JSP1.0，使用如下语法：
@@ -196,7 +197,7 @@ JSP页面不仅可以输出forward指令增加的请求参数，还可以看到�
 **从表面上看，<jsp:forward../>指令给人一种感觉：它是将用户请求“转发”到了另一个新页面，但实际上，<jsp:forward../>并没有重新向新页面发送请求，它只是完全采用了新页面来对用户生成响应————响应依然是一次请求，所以请求参数、请求属性都不会丢失。**  
 
   
-### include指令
+## include指令
 include指令是一个动态include指令，也用于包含某个页面，它不会导入被include页面的编译指令，仅仅将被导入页面的body内容插入本页面。  
 include指令语法：
 ```
@@ -227,7 +228,7 @@ org.apache.jasper.runtime.JspRuntimeLibrary.include(request,response,"目标网�
 **forward动作指令和include动作指令十分相似（它们的语法就很相似），它们都采用方法来引入目标页面，通过查看JSP页面所生成的Servlet代码可以得出：forward指令使用_jspx_page_context的forward()方法来引入目标页面，而include指令则使用通过JSPRuntimeLibrary的include()方法来引入目标页面。**
 **区别在于：执行forward时，被forward的页面将完全代替原有页面；而执行include时，被include的页面只是插入原有页面。**
 
-### useBean、setProperty、getProperty指令
+## useBean、setProperty、getProperty指令
 这三个指令都是与JavaBean相关的指令。  
 - useBean：用于在JSP页面初始化一个Java实例。
 - setProperty：用于为JavaBean实例的属性设置值。
@@ -265,11 +266,11 @@ getProperty语法：
 事实上，当页面使用setProperty和getProperty标签时，系统底层就是调用setXXX()和getXXX()方法来操作Java类的实例的属性。  
   
   
-### plugin指令
+## plugin指令
 plugin指令主要用于下载服务器端的JavaBean或Applet到客户端执行。由于程序在客户端执行，因此客户端必须安装虚拟机。  
 > **实际由于现在很少使用Applet，而且就算要使用Applet，也完全可以使用支持Applet的HTMl标签，所以使用jsp:plugin标签的使用场景并不多。**
 
-### param指令
+## param指令
 param指令用于设置参数值，这个指令本身不能单独使用，可以与一下三个指令结合使用：
 - jsp:include
 - jsp:forward
@@ -285,7 +286,7 @@ param语法：
 
 
   
-## JSP脚本中的9个内置对象
+# JSP脚本中的9个内置对象
 JSP脚本中包含了9个内置对象，这些对象都是Servlet API接口的实例，只是JSP规范对它进行了默认初始化（由JSP页面对应Servlet的_jspService()方法来创建这些实例）。也就是说，它们已经是对象了，可以直接使用。    
 - **application**：javax.servlet.ServletContext的实例，该实例代表JSP所属的Web应用本身，可用于JSP页面，或者在Servlet之间交换信息。常用方法有getAttribute(String attName)、setAttribute(String attName,String attValue)和getInitParameter(String paramName)等  
 
@@ -338,7 +339,7 @@ application = paqeContext.getServletContext();
 即只有异常处理页面对应Servlet时才会初始化exception对象。  
 
 
-### application对象
+## application对象
 先简单介绍一些Web服务器的实现原理：  
 > **虽然常把基于Web应用称为B/S架构的应用，但其实Web应用一样是C/S结构的应用，只是这种应用的服务器是Web服务器，而客户端是浏览器。**  
 
@@ -386,7 +387,7 @@ application对象代表Web应用本身，因此使用application来操作Web应�
 - 在整个Web应用的多个JSP、Servlet之间共享数据
 - 访问Web应用的配置参数
  
-#### 让多个JSP、Servlet共享数据
+### 让多个JSP、Servlet共享数据
 application通过setAttribute(String attrName,Object value)方法将一个值设置成application的attrName属性，该属性的值对整个Web应用有效，因此该Web应用的每个JSP页面或Servlet都可以访问该属性，访问属性的方法为getAttribute(String attrName)。  
   
 > 注意：  
@@ -430,7 +431,7 @@ public class GetApplication extends HttpServlet
 
 虽然使用application（即servletContext实例）可以方便多个JSP、Servlet共享数据，但不要仅为了JSP、Servlet共享数据就将数据放入application中。由于application代表整个Web应用，所以通常只应该把Web应用的状态数据放入application里。  
 
-#### 获得Web应用配置参数
+### 获得Web应用配置参数
 application还有一个重要的用处：可用于获得Web应用的配置参数。实例：
 ```
 <%
@@ -483,7 +484,7 @@ web.xml文件中使用<context-param../>元素配置的参数对整个Web应用�
 > 通过这种方式，可以将一些配置信息放在web.xml文件中配置，避免使用硬编码方式写在代码中，从而更好提高程序的移植性。  
 
 
-### config对象
+## config对象
 config 对象代表当前JSP 配置信息，但JSP 页面通常无须配置，因此也就不存在配置信息。该对象在JSP 页面中非常少用，但在Servlet 则用处相对较大。因为Servlet 需要配置在web.xml 文件中，可以指定配置参数。  
 
   
@@ -542,7 +543,7 @@ age配置参数的值：<%=config.getInitParameter("age")%>
   
 如果希望JSP页面可以获取web.xml配置文件中的配置信息就必须通过为该JSP页面在web.xml文件中分配的路径来访问页面，因为只有这样访问JSP页面才会让配置文件起作用。  
 
-### exception对象
+## exception对象
 exception对象是Throwable实例，代表JSP脚本中产生的错误和异常，是JSP页面机制的一部分。在JSP脚本中无须处理异常，即使该异常时checked异常。实际上，JSP脚本所包含的所有可能出现的异常都可以交给错误处理页面进行处理。  
   
 异常处理结构：
@@ -584,14 +585,14 @@ public void _jspService(HttpServletRequest request,HttpServletResponse response)
 
 当JSP页面page指令的isErrorPage为true时，该页面就会提供exception内置对象。  
 
-### out对象
+## out对象
 out对象代表一个页面输出流。通常用于在页面上输出变量已经常量。一般在使用输出表达式的地方，都可以使用out对象来达到同样的效果。  
 
 > 注意：  
 **所有使用out的地方，都可使用输出表达式来代替，而且使用输出表达式更加简洁。<%=...%>表达式的本质就是out.print(..);。**
 
 
-### pageContext对象
+## pageContext对象
 这个对象代表页面上下文，该对象主要用于访问JSP之间的共享数据，使用PageContext可以访问page、request、session、appliction范围的变量。  
   
 PageContext是PageContext的实例。它提供了如下两个方法来访问page、request、session 、appliction范围的变量。
@@ -624,12 +625,12 @@ pageContext.setAttribute("request2","hello",pageContext.REQUEST_SCOPE);
 因此一旦在JSP、Servlet编程中获取了pageContext对象，就可以通过它提供的上面方法来获取其他内置对象。  
 
   
-### request对象
+## request对象
 request对象是JSP中的重要对象，每个request对象封装着一次用户请求，并且所有的请求参数都被封装在request对象中，因此request对象获取请求参数的重要途径。  
 另外request代表本次请求范围，所以还可以用于操作request范围的属性。  
 
   
-#### 获取请求头/请求参数
+### 获取请求头/请求参数
 web应用是请求/响应架构的应用，浏览器发出请求时通常会附带一些请求头，还可能包含一些请求参数发给服务器，服务端负责解析请求头/请求参数的就是JSP或Servlet，而JSP、Servlet取得请求参数的途径就是request。  
 request是HttpServletRequest接口的实例，它提供了如下方法：  
 - **String getParanmeter(String paramName)**：获取paramName请求参数的值  
@@ -655,7 +656,7 @@ HttpServletRequest提供如下方法：
 
 > **为了获取GET请求里的中文数值，必须借助java.net.URLDecode类。**
 
-#### 操作request范围的属性
+### 操作request范围的属性
 HttpServletRequest还包含如下两个方法，用于设置和获取request范围的属性。
 - **setAttribute(String attName,Object attValue)**：将attValue设置成request范围的属性。
 - **Object getAttribute(String attName)**：获取request范围的属性。  
@@ -663,7 +664,7 @@ HttpServletRequest还包含如下两个方法，用于设置和获取request范�
 
 > **forward用户请求时，请求参数和request范围的属性都不会丢失，即forward后还是原来的请求，并未再次向服务器发送请求。**  
 
-#### 执行forward或include
+### 执行forward或include
 request还有一个功能就是执行forward和include，也就是代替JSP所提供的forward和include动作指令。  
 
 HttpServletRequest类提供了一个getRequestDispatcher（String path）方法，其中path就是希望forward或者include的目标路径,该方法返回RequestDispatcher，对象提供了如下两个方法。  
