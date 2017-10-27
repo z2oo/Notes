@@ -366,17 +366,18 @@ Web服务器则负责接收客户端请求，每当接收到客户端连接请�
 
 上面的6个步骤中，第1、2和6步是通用的，可以有Web服务器来完成，但第3、4和5步则存在差异：因为不同请求里包含的请求参数不同，处理用户请求的方式也不同，所生成的响应自然也不同。  
   
-实际上，Web服务器会调用Servlet的_jspService()方法来完成第3、4和5步，编写JSP页面时，页面里的静态内容、JSP脚本都会转换成_jspService()方法的执行代码，这些执行代码负责完成解析参数、处理请求、生成响应等业务功能，而Web服务器则负责完成多线程、网络通信等底层功能。  
+实际上，Web服务器会调用Servlet的_jspService()方法来完成第3、4和5步，编写JSP页面时，页面里的静态内容、JSP脚本都会转换成_jspService()方法的执行代码，这些执行代码负责完成解析参数、处理请求、生成响应等业务功能，而Web服务器则负责完成多线程、网络通信等底层功能。
+  
 Web服务器在执行了第3步解析到用户的请求参数之后，将需要通过这些请求参数来创建HttpServletRequest、HttpServletResponse等对象，作为调用_jspService()方法的参数，实际上一个Web服务器必须为ServletAPI中绝大部分接口提供实现类。    
 
 可以看出，Web应用里的JSP页面、Servlet等程序都将由Web服务器来调用，JSP、Servlet之间通常不会相互调用，这就产生了一个问题：JSP、Servlet之间如何交换数据？  
   
 为了解决这个问题，几乎所有Web服务器（包括Java、ASP、PHP、Ruby等）都会提供4个类Map的结构，分别是application、session、request、page，并允许JSP、Servlet将数据放入这4个类Map的结构中，并允许从这4个结构中取出数据。  
 这4个Map结构的区别是范围不同。  
-- application：对于整个Web应用有效，一旦JSP、Servlet将数据放入application中，该数据将可以被该应用下其他所有的JSP、Servlet访问。  
-- session：仅对一次会话有效，一旦JSP、Servlet将数据放入session中，该数据将可以被本次会话的其他所有的JSP、Servlet访问。  
-- request：仅对本次请求有效，一旦JSP、Servlet将数据放入request中，该数据将可以被该次请求的其他JSP、Servlet访问。  
-- page：仅对当前页面有效，一旦JSP、Servlet将数据放入page中，该数据只可以被当前页面的JSP脚本、声明部分访问。  
+- **application**：对于整个Web应用有效，一旦JSP、Servlet将数据放入application中，该数据将可以被该应用下其他所有的JSP、Servlet访问。  
+- **session**：仅对一次会话有效，一旦JSP、Servlet将数据放入session中，该数据将可以被本次会话的其他所有的JSP、Servlet访问。  
+- **request**：仅对本次请求有效，一旦JSP、Servlet将数据放入request中，该数据将可以被该次请求的其他JSP、Servlet访问。  
+- **page**：仅对当前页面有效，一旦JSP、Servlet将数据放入page中，该数据只可以被当前页面的JSP脚本、声明部分访问。  
   
 就像显示生活中有两个人，他们的钱需要相互交换，但他们两个人又不能相互接触，那么只能让A把钱存入银行，而B从银行去取钱。因此，可以把application、session、request和page理解为类似银行的角色。  
 JSP中的application、session、request和pageContext4个内置对象分别用于操作application、session、request和page范围中的数据。  
@@ -543,3 +544,128 @@ age配置参数的值：<%=config.getInitParameter("age")%>
 
 ### exception对象
 exception对象是Throwable实例，代表JSP脚本中产生的错误和异常，是JSP页面机制的一部分。在JSP脚本中无须处理异常，即使该异常时checked异常。实际上，JSP脚本所包含的所有可能出现的异常都可以交给错误处理页面进行处理。  
+  
+异常处理结构：
+```
+try{    //代码处理段    }   //再普通页面  
+  
+catch(Exception exception)  
+  
+{    //异常处理段   }   //在异常处理页面  
+```
+这似乎典型的异常处理捕捉模块。在JSP页面，在普通的JSP脚本只是执行第一部分即代码处理段；而异常处理页面处理第二个部分即异常处理段。在异常处理段中可以看到一个异常对象，该对象就是内置对象exception。
+> **exception对象仅仅在异常处理页面中在有效。**
+
+打开普通页面所生成的Servlet类。将发现以下代码段：
+```
+public void _jspService(HttpServletRequest request,HttpServletResponse response)  
+         throws java.io.IOException, ServletException{  
+         try{  
+         //所有JSP脚本、静态HTML部分都会转换成此部分代码  
+         response.setContentType("text/html;charset = gb2132");  
+         ...  
+         out.write("</BODY>\r\n");  
+         out.write("</HTML>\r\n");  
+         }catch(Throwable t){  
+         ...  
+         //处理该异常  
+         if(_jspx_page_context != null) _jspx_page_context.handlePageException(t);  
+         }finally{  
+         //释放资源  
+         _jspxFactory.releasePageContext(_jspx_page_context);  
+         }  
+}  
+```
+从上面的代码的第4行可知，JSP脚本和静态HTML部分都将转换成_jspService()方法里的执行性代码——这就是jsp脚本无须处理异常的原因：因为这些脚本已经存在于try块中，一旦try块捕捉到JSP脚本的异常，并且_jspx_page_context不为null，就会由该对象来处理异常，如上面的代码第12行所示。  
+  
+ _jspx_page_context 对异常的处理也是非常的简单：如果该页面的page指令指定了errorPage属性，将请求foward到errorPage属性指定的页面，否则使用系统指定的页面输出异常信息。  
+> 注意：  
+**由于只有JSP脚本、输出表达式才会生成_jspx_page_context方法里的代码，所以这两个部分的代码无须处理异常。但是**JSP的声明部分**依然强制处理checked异常，JSP的异常处理机制对JSP声明不起作用。**
+
+当JSP页面page指令的isErrorPage为true时，该页面就会提供exception内置对象。  
+
+### out对象
+out对象代表一个页面输出流。通常用于在页面上输出变量已经常量。一般在使用输出表达式的地方，都可以使用out对象来达到同样的效果。  
+
+> 注意：  
+**所有使用out的地方，都可使用输出表达式来代替，而且使用输出表达式更加简洁。<%=...%>表达式的本质就是out.print(..);。**
+
+
+### pageContext对象
+这个对象代表页面上下文，该对象主要用于访问JSP之间的共享数据，使用PageContext可以访问page、request、session、appliction范围的变量。  
+  
+PageContext是PageContext的实例。它提供了如下两个方法来访问page、request、session 、appliction范围的变量。
+- **getAttribute(Stringname)**：取得page范围内的name属性。
+- **getAttribute(String name, int scope)**：取得指定范围内的name属性。其中scope可以是如下四个值：
+    - **PageContext.PAGE_SCOPE**：对应于page范围
+    - **PageContext.REQUEST_SCOPE**：对应于request范围
+    - **PageContext.SESSION_SCOPE**：对应于session范围
+    - **PageContext.APPLICATION_SCOPE**：对应于application范围
+
+与getAttribute（）方法相对应的，也提供了2个对应的setAttribute（）方法。用于将指定变量放入到page、request、session、appliction范围内。  
+```
+//使用pageContext设置属性，该属性默认在page范围内  
+pageContext.setAttribute("page","hello");
+//将属性设置在request范围内  
+pageContext.setAttribute("request2","hello",pageContext.REQUEST_SCOPE);  
+```
+可以使用pageContext.getAttributesScope(String paramName)获取各属性所在的范围，其中这些范围获取的都是整型变量，这些整型变量对应如下4个生存范围：
+- 1：对应page生存范围
+- 2：对应request生存范围
+- 3：对应session生存范围
+- 4：对应application生存范围
+
+不仅如此，pageContext还可以用于获取其他内置对象，pageContext对象包含如下方法：  
+- **ServletRequest getRequest()**:获取request对象
+- **ServletRequest getResponse()**：获取response对象
+- **ServletConfig getServletConfig()**：获取config对象
+- **ServletContext getServletContext()**：获取application对象
+- **HttpSession getSession()**：获取session对象
+因此一旦在JSP、Servlet编程中获取了pageContext对象，就可以通过它提供的上面方法来获取其他内置对象。  
+
+  
+### request对象
+request对象是JSP中的重要对象，每个request对象封装着一次用户请求，并且所有的请求参数都被封装在request对象中，因此request对象获取请求参数的重要途径。  
+另外request代表本次请求范围，所以还可以用于操作request范围的属性。  
+
+  
+#### 获取请求头/请求参数
+web应用是请求/响应架构的应用，浏览器发出请求时通常会附带一些请求头，还可能包含一些请求参数发给服务器，服务端负责解析请求头/请求参数的就是JSP或Servlet，而JSP、Servlet取得请求参数的途径就是request。  
+request是HttpServletRequest接口的实例，它提供了如下方法：  
+- **String getParanmeter(String paramName)**：获取paramName请求参数的值  
+- **Map getParameterMap()**：获取所有请求参数名和参数值所组成的Map对象  
+- **Enumeration getParameterMap()**：获取所有请求参数名组成的Enumeration对象  
+- **String[] getParameterValues(String name)**：paramName请求参数的值，当请求参数有多个值时，该方法将返回对个值所组成的数组  
+HttpServletRequest提供如下方法：
+- **String getHeader(String name)**：根据指定请求头的值  
+- **java.util.Enumeration<String> getHeaderNames()**: 获得所有请求头的值  
+- **java.util.Enumeration<String> getHeaders(String name)**：获得指定请求头的多个值  
+- **int getIntHeader(String)**：获取指定请求头的值，并将该值转为整数  
+
+对于开发人员来说，请求头和请求参数都是由用户发送到服务器的数据，区别在于请求头通常由浏览器自动添加，因此一次请求总是包含若干请求头；而请求参数则通常需要开发人员控制添加，让客户端发送请求参数通常分为两种情况。  
+- **GET方式的请求**:直接在浏览器地址蓝输入访问地址发送的请求或提交表单发送请求时，该表单对应的form元素没有设置method属性，或设置method属性为get，这几种请求都是GET方式的请求。GET方式的请求会将请求参数名和值转换成字符串，并附加在源URL之后，因此可以在地址栏中看到请求参数的名和值。且GET请求传送的数据量较小，一般不能大于2KB.  
+- **POST方式的请求**：这种方式通常使用提交表单（由form HTML元素表示）的方式来发送，且需要设置form元素的mothod属性为post。POST方式传送的数据量较大通常认为POST请求参数的大小不受限制，但往往取决于服务器的限制，POST请求传输的数据量总比GET传输的数据量大。而且POST方式发送的请求参数以及对应的值放在HTML HEADER中传输，用户不能在地址蓝里看到请求参数，安全性相对较高。  
+所以，通常使用POST方式发送请求。  
+> 提示：  
+**并不是每个表单域都会生成请求参数，而是有name属性的表单域才生成请求参数。关于表单域和请求参数的关系遵循如下4点：**
+> - **每个有name属性的表单域对应一个请求参数。**
+> - **如果有多个表单域有相同的name属性，则多个表单域只能生成一个请求参数，只是该参数有多个值。**
+> - **表单域的name属性指定请求参数名，value指定请求参数的值。**
+> - **如果表单域设置了disable="disabled"属性，则该表单域不再生成请求参数。**
+
+> **为了获取GET请求里的中文数值，必须借助java.net.URLDecode类。**
+
+#### 操作request范围的属性
+HttpServletRequest还包含如下两个方法，用于设置和获取request范围的属性。
+- **setAttribute(String attName,Object attValue)**：将attValue设置成request范围的属性。
+- **Object getAttribute(String attName)**：获取request范围的属性。  
+  
+
+> **forward用户请求时，请求参数和request范围的属性都不会丢失，即forward后还是原来的请求，并未再次向服务器发送请求。**  
+
+#### 执行forward或include
+request还有一个功能就是执行forward和include，也就是代替JSP所提供的forward和include动作指令。  
+
+HttpServletRequest类提供了一个getRequestDispatcher（String path）方法，其中path就是希望forward或者include的目标路径,该方法返回RequestDispatcher，对象提供了如下两个方法。  
+- **forward(ServletRequest request,ServletResponse response)**：执行forward。
+- **include(ServletRequest request,ServletResponse response)**：执行include。
