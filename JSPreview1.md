@@ -45,7 +45,7 @@ Tomcat根据JSP页面生成对应Servlet的Java文件和class文件。
   
 
 # JSp的4中基本语法
-## 1.JSP注释
+## JSP注释
 JSP注释的格式：
 ```
 <%-- 注释内容 --%>
@@ -56,7 +56,7 @@ HTMl注释的格式：
 ```
 HTML的注释可以通过源代码查看到，而JSP的注释是无法通过源代码查看到的。这表明JSP注释不会被发送到客户端。  
 
-## 2.JSP声明
+## JSP声明
 JSP声明用于声明变量和方法。在JSP声明中声明方法看起来很特别，似乎不需要定义类就可以直接定义方法。  
 实际上，JSP声明将会转换成对应Servlet的成员变量或成员方法，因此JSP声明依然符合java语法。  
 JSP声明的语法格式如下：
@@ -71,7 +71,7 @@ JSP页面会编译成一个Servlet类，每个Servlet在容器中只有一个实
 
 JSP声明的方法其实是JSP编译中生成的Servlet的实例方法——Java里的方法是不能独立的，即使在JSP页面中也不行。   
 
-## 3.输出JSP表达式
+# 输出JSP表达式
 语法格式：
 ```
 <%=表达式%>
@@ -81,7 +81,7 @@ JSP声明的方法其实是JSP编译中生成的Servlet的实例方法——Java
 > 注意：
 **输出表达式语法后不能有分号**
 
-## 4.JSP脚本
+# JSP脚本
 格式：
 ```
 <% java代码%>
@@ -106,7 +106,7 @@ JSP脚本将转换成Servlet里Service方法的可执行性代码。这意味着
 <%@ 编译指令名 属性名="属性值"···%>
 ```
 
-## 1.page指令
+## page指令
 page指令通常位于JSP页面的顶端，一个JSP页面可以使用多条page指令。  
 page指令语法格式如下：
 ```
@@ -146,7 +146,7 @@ page指令语法格式如下：
 **errorPage属性的实质是JSP的异常处理机制，因为JSP內建了异常机制支持，所以JSP可以不处理异常，即使是checked异常。**
 
 
-## 2.include指令
+## include指令
 使用include指令，可以将一个外部文件嵌入到当前JSP文件中，同时解析这个页面中的JSP语句（如果有的话）。这是个静态的include语句，它会把目标页面的其他编译指令也包含进来，但动态include则不会。  
 include既可以包含静态的文本，也可以包含动态的JSP页面。静态的include编译指令会将被包含的页面加入本页面，融合成一个页面，因此被包含页面甚至不是一个完整的页面。  
 
@@ -174,7 +174,7 @@ JSP动作指令主要有如下7个：
 - jsp:setProperty  设置JavaBean实例的属性值
 - jsp:getProperty  获取JavaBean实例的属性值
 
-## 1.forward指令
+## forward指令
 forward指令用于将页面响应转发到另外的页面。既可以转发到静态的HTML页面，也可以转发到动态的JSP页面，或者转发到容器中的Servlet。  
 forward指令格式：  
 对于JSP1.0，使用如下语法：
@@ -197,7 +197,7 @@ JSP页面不仅可以输出forward指令增加的请求参数，还可以看到�
 **从表面上看，<jsp:forward../>指令给人一种感觉：它是将用户请求“转发”到了另一个新页面，但实际上，<jsp:forward../>并没有重新向新页面发送请求，它只是完全采用了新页面来对用户生成响应————响应依然是一次请求，所以请求参数、请求属性都不会丢失。**  
 
   
-## 2.include指令
+## include指令
 include指令是一个动态include指令，也用于包含某个页面，它不会导入被include页面的编译指令，仅仅将被导入页面的body内容插入本页面。  
 include指令语法：
 ```
@@ -228,7 +228,7 @@ org.apache.jasper.runtime.JspRuntimeLibrary.include(request,response,"目标网�
 **forward动作指令和include动作指令十分相似（它们的语法就很相似），它们都采用方法来引入目标页面，通过查看JSP页面所生成的Servlet代码可以得出：forward指令使用_jspx_page_context的forward()方法来引入目标页面，而include指令则使用通过JSPRuntimeLibrary的include()方法来引入目标页面。**
 **区别在于：执行forward时，被forward的页面将完全代替原有页面；而执行include时，被include的页面只是插入原有页面。**
 
-## 3.useBean、setProperty、getProperty指令
+## useBean、setProperty、getProperty指令
 这三个指令都是与JavaBean相关的指令。  
 - useBean：用于在JSP页面初始化一个Java实例。
 - setProperty：用于为JavaBean实例的属性设置值。
@@ -266,11 +266,11 @@ getProperty语法：
 事实上，当页面使用setProperty和getProperty标签时，系统底层就是调用setXXX()和getXXX()方法来操作Java类的实例的属性。  
   
   
-## 4.plugin指令
+## plugin指令
 plugin指令主要用于下载服务器端的JavaBean或Applet到客户端执行。由于程序在客户端执行，因此客户端必须安装虚拟机。  
 > **实际由于现在很少使用Applet，而且就算要使用Applet，也完全可以使用支持Applet的HTMl标签，所以使用jsp:plugin标签的使用场景并不多。**
 
-## 5.param指令
+## param指令
 param指令用于设置参数值，这个指令本身不能单独使用，可以与一下三个指令结合使用：
 - jsp:include
 - jsp:forward
@@ -339,7 +339,7 @@ application = paqeContext.getServletContext();
 即只有异常处理页面对应Servlet时才会初始化exception对象。  
 
 
-## 1.application对象
+## application对象
 先简单介绍一些Web服务器的实现原理：  
 > **虽然常把基于Web应用称为B/S架构的应用，但其实Web应用一样是C/S结构的应用，只是这种应用的服务器是Web服务器，而客户端是浏览器。**  
 
@@ -387,7 +387,7 @@ application对象代表Web应用本身，因此使用application来操作Web应�
 - 在整个Web应用的多个JSP、Servlet之间共享数据
 - 访问Web应用的配置参数
  
-#### 1.让多个JSP、Servlet共享数据
+### 让多个JSP、Servlet共享数据
 application通过setAttribute(String attrName,Object value)方法将一个值设置成application的attrName属性，该属性的值对整个Web应用有效，因此该Web应用的每个JSP页面或Servlet都可以访问该属性，访问属性的方法为getAttribute(String attrName)。  
   
 > 注意：  
@@ -431,7 +431,7 @@ public class GetApplication extends HttpServlet
 
 虽然使用application（即servletContext实例）可以方便多个JSP、Servlet共享数据，但不要仅为了JSP、Servlet共享数据就将数据放入application中。由于application代表整个Web应用，所以通常只应该把Web应用的状态数据放入application里。  
 
-#### 2.获得Web应用配置参数
+### 获得Web应用配置参数
 application还有一个重要的用处：可用于获得Web应用的配置参数。实例：
 ```
 <%
@@ -484,7 +484,7 @@ web.xml文件中使用<context-param../>元素配置的参数对整个Web应用�
 > 通过这种方式，可以将一些配置信息放在web.xml文件中配置，避免使用硬编码方式写在代码中，从而更好提高程序的移植性。  
 
 
-## 2.config对象
+## config对象
 config 对象代表当前JSP 配置信息，但JSP 页面通常无须配置，因此也就不存在配置信息。该对象在JSP 页面中非常少用，但在Servlet 则用处相对较大。因为Servlet 需要配置在web.xml 文件中，可以指定配置参数。  
 
   
@@ -543,7 +543,7 @@ age配置参数的值：<%=config.getInitParameter("age")%>
   
 如果希望JSP页面可以获取web.xml配置文件中的配置信息就必须通过为该JSP页面在web.xml文件中分配的路径来访问页面，因为只有这样访问JSP页面才会让配置文件起作用。  
 
-## 3.exception对象
+## exception对象
 exception对象是Throwable实例，代表JSP脚本中产生的错误和异常，是JSP页面机制的一部分。在JSP脚本中无须处理异常，即使该异常时checked异常。实际上，JSP脚本所包含的所有可能出现的异常都可以交给错误处理页面进行处理。  
   
 异常处理结构：
@@ -585,14 +585,14 @@ public void _jspService(HttpServletRequest request,HttpServletResponse response)
 
 当JSP页面page指令的isErrorPage为true时，该页面就会提供exception内置对象。  
 
-## 4.out对象
+## out对象
 out对象代表一个页面输出流。通常用于在页面上输出变量已经常量。一般在使用输出表达式的地方，都可以使用out对象来达到同样的效果。  
 
 > 注意：  
 **所有使用out的地方，都可使用输出表达式来代替，而且使用输出表达式更加简洁。<%=...%>表达式的本质就是out.print(..);。**
 
 
-## 5.pageContext对象
+## pageContext对象
 这个对象代表页面上下文，该对象主要用于访问JSP之间的共享数据，使用PageContext可以访问page、request、session、appliction范围的变量。  
   
 PageContext是PageContext的实例。它提供了如下两个方法来访问page、request、session 、appliction范围的变量。
@@ -625,12 +625,12 @@ pageContext.setAttribute("request2","hello",pageContext.REQUEST_SCOPE);
 因此一旦在JSP、Servlet编程中获取了pageContext对象，就可以通过它提供的上面方法来获取其他内置对象。  
 
   
-## 6.request对象
+## request对象
 request对象是JSP中的重要对象，每个request对象封装着一次用户请求，并且所有的请求参数都被封装在request对象中，因此request对象获取请求参数的重要途径。  
 另外request代表本次请求范围，所以还可以用于操作request范围的属性。  
 
   
-### 1.获取请求头/请求参数
+### 获取请求头/请求参数
 web应用是请求/响应架构的应用，浏览器发出请求时通常会附带一些请求头，还可能包含一些请求参数发给服务器，服务端负责解析请求头/请求参数的就是JSP或Servlet，而JSP、Servlet取得请求参数的途径就是request。  
 request是HttpServletRequest接口的实例，它提供了如下方法：  
 - **String getParanmeter(String paramName)**：获取paramName请求参数的值  
@@ -656,7 +656,7 @@ HttpServletRequest提供如下方法：
 
 > **为了获取GET请求里的中文数值，必须借助java.net.URLDecode类。**
 
-### 2.操作request范围的属性
+### 操作request范围的属性
 HttpServletRequest还包含如下两个方法，用于设置和获取request范围的属性。
 - **setAttribute(String attName,Object attValue)**：将attValue设置成request范围的属性。
 - **Object getAttribute(String attName)**：获取request范围的属性。  
@@ -664,7 +664,7 @@ HttpServletRequest还包含如下两个方法，用于设置和获取request范�
 
 > **forward用户请求时，请求参数和request范围的属性都不会丢失，即forward后还是原来的请求，并未再次向服务器发送请求。**  
 
-### 3.执行forward或include
+### 执行forward或include
 request还有一个功能就是执行forward和include，也就是代替JSP所提供的forward和include动作指令。  
 
 HttpServletRequest类提供了一个getRequestDispatcher（String path）方法，其中path就是希望forward或者include的目标路径,该方法返回RequestDispatcher，对象提供了如下两个方法。  
@@ -679,13 +679,13 @@ getRequestDispatcher("/a.jsp").include(request,response);
 getRequestDispatcher("/a.jsp").forward(request,response);
 ```
 
-## 7.response对象
+## response对象
 response代表服务器对客户端的响应。大部分时候，程序无须使用response来响应客户端请求，因为有个更简单的响应对象————out，它代表页面输出流，直接使用out响应更简单。  
 但out是JspWriter的实例，JspWriter是Writer的子类，Writer是字符流，无法输出非字符内容。例如需要在JSP页面中动态生成一副位图，或者输出一个PDF文档，此时必须使用response作为响应输出。  
   
 除此之外，还可以使用response来重定向请求，以及用于向客户端增加cookie。  
 
-### 1.response响应生成非字符响应
+### response响应生成非字符响应
 response是HttpServletResponse接口的实例，该接口提供了一个getOutputStream()方法，该方法返回响应输出字节流  
 ```
 <%-- 通过contentType属性指定响应数据是图片 --%>
@@ -731,7 +731,7 @@ ImageIO.write(image , "png" , response.getOutputStream());
 ```
 使用这种临时生成图片的方式就可以非常容易地实现网页上的图形验证码功能，不仅如此，使用response生成非字符响应还可以直接生成PDF文档，Excel文件，这些文件可直接作为报表使用。  
 
-### 2.重定向
+### 重定向
 重定向是response的另外一个用处，与forward不同的是，重定向会丢失所有的请求参数和request范围的属性。  
 因为重定向将生成第二次请求，与前一次请求不在同一个request范围内，所以发送一次请求的请求参数和request范围的属性全部丢失。  
   
@@ -751,7 +751,7 @@ forward的目标页面可以访问原请求的请求参数，因为依然是同�
 执行forward后地址栏里的URL不会改变|执行redirect后地址栏改为重定向的目标URL，相当于在浏览器地址栏里输入新的URL后按回车键
 
 
-### 3.增加Cookie
+### 增加Cookie
 cookie通常用于网站记录客户的某些信息，比如客户的用户名及客户的喜好等，一旦用户下次登录，网站可以获取到客户的相关信息，根据这些客户信息，网站可以对客户提供更好的服务。  
   
 Cookie与session的不同之处在于：session会随着浏览器的关闭而失效，但Cookie会一直存放在客户端机器上，除非超出了C ookie的生命期限。   
@@ -769,7 +769,7 @@ request对象提供了getCookies()方法，该方法返回客户端机器上所�
 > **使用Cookie对象必须设置生成期限，否则Cookie将会随浏览器的关闭而自动消失**
 
   
-## 8.session对象
+## session对象
  session也是一个很常用的对象，这个对象代表一起用户会话。一次会话的含义是：从客户端浏览器链接服务器开始，到客户端浏览器与服务器断开为止，这个过程就是一次对话。  
    
 session通常用于跟踪用户的会话信息，如判断用户是否登录系统，或者在购物车应用中，用于跟踪用户购买的商品等。   
@@ -786,253 +786,4 @@ session对象是HttpSession的实例，HttpSession有如下两个常用的方法
 关于session还有一点需要指出，session机制通常用于保存客户端的状态信息，这些状态信息，需要保存到Web服务器的硬盘上，所以要求session里的属性值必须是可序列化的，否则会引发不可序列化的异常。  
 
 > session的属性值可以是任何可序列化的Java对象。 
-
-# Servlet介绍
-JSP的本质就是Servlet，开发者把编写好的JSP页面部署在Web容器中之后，Web容器会将JSP编译成对应的Servlet。  
-但直接使用Servlet的坏处是：Servlet的开发效率非常低，特别是当Servlet生成表现层页面时，页面中所有的HTML标签，都需要采用Servlet的输出流来输出，极其繁琐。  
-而且Servlet是Java类，必须由程序员开发、修改、维护，这些问题都使Servlet作为表现层技术显得很困难。  
-自MVC规范出现后，Servlet的责任开始明确下来，仅仅作为控制器使用，不再需要生成页面标签，也不再作为视图层角色使用。  
-  
-## 1.Servlet的开发
-Servlet通常被称为服务器端小程序，是运行在服务器的程序，用于处理和响应客户端的请求。  
-  
-    
-Servlet是个特殊的Java类，这个Java类必须继承HttpServlet。每个Servlet可以响应客户端的请求。Servlet提供不同的方法用于响应客户端请求。
-- **doGet**：用于响应客户端的GET请求
-- **doPost**：用于响应客户端的POST请求
-- **doPut**：用于响应客户端的PUT请求
-- **doDelete**：用于响应客户端的DELETE请求
-
-事实上，客户端的请求通常只有GET和POST两种，Servlet为了响应这两种请求，必须重写doGet()和doPost()方法。  
-如果为了响应4个方式的请求，则四个方法都要重写。   
-大部分时候，Servlet对于所有请求的响应都是一样的。此时，可以采用重写一个方法来代替上面的几个方法：只需重写service()方法即可响应客户端的所有请求。   
-另外，HttpServlet还包含两个方法：
-- **init(ServletConfig config)**：创建Servlet实例时，调用该方法的初始化Servlet资源
-- **destroy()**：销毁Servlet实例时，自动调用该方法回收资源
-
-通常无须重写init()和destroy()两个方法，除非需要在初始化Servlet时，完成某些资源初始化的方法，才考虑重写init方法。如果需要在销毁Servlet之前，先完成某些资源的回收，比如关闭数据库连接等，才需要重写destroy方法。   
-
-> 注意：  
-**不用为Servlet类编写构造器，如需要对Servlet执行初始化操作，应将初始化操作放在Servlet的init()方法中定义。而且，如果重写了init(ServletConfig config)方法，则应在重写该方法的第一行调用super.init(config)。即调用HttpServlet的init方法。**
-
-下面提供一个Servlet示例，该Servlet将获取表单请求参数，并将请求参数显示给客户端。
-```
-//Servlet必须继承HttpServlet类
-@WebServlet(name="firstServlet" 
-    , urlPatterns={"/firstServlet"})
-public class FirstServlet extends HttpServlet
-{
-    //客户端的响应方法，使用该方法可以响应客户端所有类型的请求
-    public void service(HttpServletRequest request,
-        HttpServletResponse response) 
-        throws ServletException,java.io.IOException
-    {
-        //设置解码方式
-        request.setCharacterEncoding("GBK");
-        response.setContentType("text/html;charSet=GBK");
-        //获取name的请求参数值
-        String name = request.getParameter("name");
-        //获取gender的请求参数值
-        String gender = request.getParameter("gender");
-        //获取color的请求参数值
-        String[] color = request.getParameterValues("color");
-        //获取country的请求参数值
-        String national = request.getParameter("country"); 
-        //获取页面输出流
-        PrintStream out = new PrintStream(response.getOutputStream());
-        //输出HTML页面标签
-        out.println("<html>");
-        out.println("<head>");
-        out.println("<title>Servlet测试</title>");
-        out.println("</head>");
-        out.println("<body>");
-        //输出请求参数的值：name
-        out.println("您的名字：" + name + "<hr/>");
-        //输出请求参数的值：gender
-        out.println("您的性别：" + gender + "<hr/>");
-        //输出请求参数的值：color
-        out.println("您喜欢的颜色：");
-        for(String c : color)
-        {
-            out.println(c + " ");
-        }
-        out.println("<hr/>");
-        out.println("您喜欢的颜色：");
-        //输出请求参数的值：national
-        out.println("您来自的国家：" + national + "<hr/>");
-        out.println("</body>");
-        out.println("</html>");
-    }
-}
-```
-上面的Servlet类继承了HttpServlet类，表明他可以作为一个Servlet使用。其中的service方法用来响应用户请求。该Servlet和之前的九个内置对象那篇中的request1.jsp页面的效果完全相同，都通过HttpServletRequest获取客户端的form请求参数，并显示请求参数的值。  
-
-Servlet和JSP的区别在于:  
-- Servlet中没有内置对象，原来JSP中的内置对象都必须由程序显示创建 
-- 对于静态的HTML标签，Servlet都必须使用页面输出流逐行输出  
-
-这也是说明，JSP是Servlet的一种简化，使用JSP只需要完成程序员需要输出到客户端的内容，至于JSP脚本如何嵌入一个类中，由JSP容器完成。而Servlet则是个完整的Java类，这个类的service()方法用于生成对客户端的响应。  
-
-普通Servlet类里的service()方法的作用，完全等同于JSP生成Servlet类的_jspService()方法。   
-因此原JSP页面的JSP脚本、静态HTML内容，在普通Servlet里都应该转换成service()方法的代码或输出语句；原JSP声明中的内容，对应为在Servlet中定义的成员变量或成员方法。  
-
-## 2.Servlet的配置
-编辑好的Servlet 源文件并不能响应用户请求，还必须将其编译成class 文件。将编译后的HelloServlet. class 文件放在WEB-INF/classes 路径下，如果Servlet 有包，则还应该将class 文件放在对应的包路径下。  
-为了让Servlet 能响应用户请求，还必须将Servlet 配置在Web 应用中。配置Servlet时，需要修改web.xrnl 文件。  
-  
-  从Servlet3.0开始，配置Servlet有两种方式。  
-  - 在Servlet类中使用@WebServlet注解进行配置
-  - 通过在web.xml文件中进行配置
-  
-使用@WebServlet来配置Servlet时，其有如下常用的属性（都是可选的）：
-- **name**：指定该Servlet的名称
-- **urlPatterns / value**：这两个属性的作用完全相同，都是指定该Servlet处理的URL
-- **asyncSupported**：指定该Servlet是否支持异步操作模式
-- **display**：指定该Servlet的显示名
-- **initParams**：用于为该Servlet配置参数
-- **loadOnStartup**：用于将该Servlet配置成load-on-startup的Servlet
-
-如果打算使用注解来配置Servlet，有两点需要指出：  
-- 不要在web.xml文件的根元素(<web-app../>)中指定metadata-complete=“true”  
-- 不要在web.xml文件中配置该Servlet
-
-如果打算使用web.xml文件来配置Servlet，则需要配置如下两个部分：
-- 配置Servlet的名字：对应web.xml文件中的<servlet/>元素  
-- 配置Servlet的URL：对应web.xml文件中的<servlet-mapping/>元素。这一步是可选的，但如果没有为是Servlet配置URL，则该Servlet不能响应用户请求
-
-```
-<!-- 配置Servlet的名字 -->  
-<servlet>  
-    <!-- 指定Servlet的名字， 相当于指定@WebServlet的name属性 -->  
-    <servlet-name>firstServlet</servlet-name>  
-    <!-- 指定Servlet的实现类 -->  
-    <servlet-class>lee.FirstServlet</servlet-class>  
-</servlet>  
-<!-- 配置Servlet的URL -->  
-<servlet-mapping>  
-    <!-- 指定Servlet的名字 -->  
-    <servlet-name>firstServlet</servlet-name>  
-    <!-- 指定Servlet映射的URL地址， 相当于指定@WebServlet的urlPatterns属性 -->  
-    <url-pattern>/aa</url-pattern>  
-</servlet-mapping>  
-```
-如果没有在web.xml文件中增加上面的配置片段，那么该Servlet类上的@WebServlet注解就会起作用，该Servlet的URL为注解中的urlPatterns属性。  
-
-## 3.JSP/Servlet生命周期
-JSP本质是Servlet，JSP页面将有Web容器编译成对应的Servlet，当Servlet容器中运行时，其实例的创建及销毁等都不是由程序员决定的，而是有Web容器进行控制的。  
-  
-创建Servlet实例有两个时机：
-- 客户端第一次请求某个Servlet时，系统创建该Servlet的实例：大部分的Servlet都是这种Servlet  
- 
-- Web应用启动时立即创建Servlet实例，即load-on-startup Servlet
-
-每个Servlet的运行都遵循如下生命周期：
-1. 创建Servlet 实例。  
- 
-2. Web 容器调用Servlet 的init 方法，对Servlet 进行初始化。  
- 
-3. Servlet 初始化后，将一直存在于容器中，用于响应客户端请求。如果客户端有get 请求，容器调用Servlet 的doGet 方法处理并响应请求。对于不同的请求，有不同的处理方法，或者统一使用service 方法处理来响应用户请求。  
- 
-4. Web 容器角色销毁Servlet 时，调用Servlet 的destroy 方法，通常在关闭Web容器之时销毁Servlet。
-
-## 4.load-on-startup Servlet
-这种方式的Servlet在Web应用启动时立即创建Servlet实例，通常是用于某些后台服务的Servlet，或者需要拦截很多请求的Servlet；这种Servlet通常作为应用的基础Servlet使用，提供重要的后台服务。  
-  
-配置load-on-startup的Servlet有两种方式：
-- 在web.xml文件中通过<servlet../>元素的<load-on-startup../>子元素进行配置  
-- 通过@WebServlet注解的loadOnStartup属性指定
-
-<load-on-startup../>元素或loadOnStartUp属性都只接收一个整型值，这个整型值越小，Servlet就越优先实例化。  
-```
-<servlet>  
-    <!-- Servlet名 -->  
-    <servlet-name>timerServlet</servlet-name>  
-    <!-- Servlet的实现类 -->  
-    <servlet-class>lee.TimerServlet</servlet-class>  
-    <!-- 配置应用启动时，创建Servlet实例 ，相当于指定@WebServlet的loadOnStartup属性 -->  
-    <load-on-startup>1</load-on-startup>  
-</servlet>  
-```
-
-## 5.访问Servlet的配置参数
-配置Servlet时，还可以增加额外的配置参数。通过使用配置参数，可以实现提供更好的可移植性，避免将参数以硬编码方式写在程序代码中。  
-为Servlet配置参数有两种方式：  
-- 通过@WebServlet的initParams属性来指定
-- 通过在web.xml文件的<servlet.../>元素中添加<init-param.../>子元素来指定  
-第二种方式与为JSP配置初始化参数极为相似，因为JSP的实质就是Servlet，而且配置JSP的实质就是把JSP当Servlet使用。  
-  
-访问Servlet配置参数通过ServletConfig独享完成，ServletConfig提供getInitParameter()来获取初始化参数，如下  
-```
-// 获取ServletConfig对象  
-ServletConfig config = getServletConfig();  
-// 通过ServletConfig对象获取配置参数：dirver  
-String driver = config.getInitParameter("driver");  
-// 通过ServletConfig对象获取配置参数：url  
-String url = config.getInitParameter("url");  
-// 通过ServletConfig对象获取配置参数：user  
-String user = config.getInitParameter("user");  
-// 通过ServletConfig对象获取配置参数：pass  
-String pass = config.getInitParameter("pass");  
-```
-> JSP的内置对象config就是此处的ServletConfig。
-
-ServletConfig获取配置参数的方法和ServletContext获取配置参数的方法完全一样，只是ServletConfig是获得当前Servlet的配置参数，而ServletContext是获取整个Web应用的配置参数。  
-  
-下面是该Servlet在web.xml文件中的配置片段：
-```
-<servlet>  
-    <!-- 配置Servlet名 -->  
-    <servlet-name>testServlet</servlet-name>  
-    <!-- 指定Servlet的实现类 -->  
-    <servlet-class>lee.TestServlet</servlet-class>  
-    <!-- 配置Servlet的初始化参数：driver -->  
-    <init-param>  
-        <param-name>driver</param-name>  
-        <param-value>com.mysql.jdbc.Driver</param-value>  
-    </init-param>  
-    <!-- 配置Servlet的初始化参数：url -->  
-    <init-param>  
-        <param-name>url</param-name>  
-        <param-value>jdbc:mysql://localhost:3306/javaee</param-value>  
-    </init-param>  
-    <!-- 配置Servlet的初始化参数：user -->  
-    <init-param>  
-        <param-name>user</param-name>  
-        <param-value>root</param-value>  
-    </init-param>  
-    <!-- 配置Servlet的初始化参数：pass -->  
-    <init-param>  
-        <param-name>pass</param-name>  
-        <param-value>32147</param-value>  
-    </init-param>  
-</servlet>  
-```
-上面配置了4个配置参数，Servlet通过这4个配置参数就可连接数据库。  
-
-  
-## 6.使用Servlet作为控制器
-使用Servlet作为表现层的工作量太大，所有的HTML标签都需要使用页面输出流生成。  
-所以使用Servlet作为表现层有如下三个劣势：
-- 开发效率低，所有的HTML标签都需使用页面输出流完成  
-- 不利于团队协作开发，美工人员无法参与Servlet界面的开发  
-- 程序可维护性差，即使修改一个按钮的标题，都必须重新编辑Java代码，并重新编译
-
-在标准的MVC模式中，Servlet仅作为控制器使用。JavaEE应用框架正式遵循MVC模式的，对于遵循MVC模式的JavaEE应用而言，JSP仅作为表现层(View)技术，其作用有两点：
-- 负责收集用户请求参数
-- 将应用的处理结果、状态数据呈现给用户
-  
-
-Servlet则仅充当控制器(Controller)角色，它的作用类似于调度员：所有用户请求都发送给Servlet，Servlet调用Model来处理用户请求，并调用JSP来呈现处理结果；或者Servlet直接调用JSP将应用的状态数据呈现给用户。  
-  
-Model通常由JavaBean来充当，所有业务逻辑、数据访问逻辑都在Model中实现。实际上，隐藏在Model下的可能还有很多丰富的组件，例如DAO组件、领域对象等。  
-  
-控制器负责接收客户端的请求，它既不直接对客户端输出响应，也不处理用户请求，只调用JavaBean来处理用户请求；JavaBean处理结束后，Servlet根据处理结果，调用不同的JSP页面想浏览器呈现处理结果。  
-  
-下面是各个MVC中各个角色的对应组件：
-- **M：Model**，即模型，对应JavaBean
-- **V：View**，即视图，对应JSP页面
-- **C：Controller**，即控制器，对应Servlet 
-  
-  
-# JSP2的自定义标签
 
