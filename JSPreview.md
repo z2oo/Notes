@@ -1035,4 +1035,412 @@ Model通常由JavaBean来充当，所有业务逻辑、数据访问逻辑都在M
   
   
 # JSP2的自定义标签
+在JSP2中开发标签库的步骤：
+1. 开发自定义标签处理类
+2. 建立一个\*.tld文件，每个*.tld文件对应一个标签库，每个标签库可包含多个标签
+3. 在JSP文件中使用自定义标签  
 
+## 开发自定义标签类
+自定义标签类应该继承一个父类：javax.servlet.jsp.tagext.SimpleTagSupport，除此之外，JSP自定义标签类还有如下要求：  
+- 如果标签类包含属性，每个属性都有对应的getter和setter方法
+- 重写doTag()方法，这个方法负责生成页面内容
+
+```
+public class HelloWorldTag extends SimpleTagSupport {  
+    // 重写doTag()方法，该方法为标签生成页面内容  
+    public void doTag() throws JspException, IOException {  
+        // 获取页面输出流，并输出字符串  
+        getJspContext().getOut().write("Hello World " + new java.util.Date());  
+    }  
+```
+上面这个标签的处理类非常简答，它继承了SimpleTagSupport父类，并重写了doTage()方法，而doTag方法则负责输出页面内容。该标签没有属性，因此无须提供setter和getter方法。  
+
+## 建立TLD文件
+TLD是Tag Library Definition的缩写，即标签库定义，文件的后缀是tld，每个TLD文件对应一个标签库，一个标签库中可包含多个标签。TLD文件也称为标签库定义文件。  
+标签库定义文件的根元素是taglib，他可以包含多个tag子元素，每个tag子元素都定义了一个标签。通常可以到Web容器下复制一个标签库定义文件，在其基础上进行修改即可。例如Tomcat中，在webapps\examples\WEB-INF\jsp2路径下包含了一个示例文件。  
+  
+    
+taglib下有如下三个子元素：
+- **tlib-version**：指定该标签库实现的版本，这是一个作为标识的内部版本号，对程序没有太大的作用
+- **short-name**：该标签库的默认短名，该名称通常也没有太大的用处
+- **uri**：这个属性非常重要，它指定该标签库的URI，相当于指定该标签库的唯一标识。JSP页面中使用标签库时就是根据该URI属性来定位标签库的 
+
+  
+taglib元素下可以包含多个tag元素，每个tag元素定义一个标签，tag元素下允许出现如下常用子元素：
+- **name**：该标签的名称，这个子元素很重要，JSP页面中就是根据该名称来使用此标签的
+- **tag-class**：指定标签的处理类
+- **body-content**：这个子元素也很重要，它指定标签体内容。其值可以为：
+    - tagdependent：指定标签处理类自己负责处理标签体
+    - empty：指定该标签只能作用空标签使用
+    - scriptless：指定该标签的标签体可以是静态HTML元素、表达式语言，但不允许出现JSP脚步
+- **dynamic-attributes**：指定该标签是否支持动态属性。只有当定义动态属性标签时才需要该子元素。
+
+## 使用标签库
+在JSP页面中确定指定的标签需要两点：
+- 标签库URI：确定使用哪个标签库
+- 标签名：确定使用哪个标签
+  
+使用标签库分成以下两个步骤：
+- 导入标签库：使用taglib编译指令导入标签库，就是将标签库和指定前缀关联起来  
+- 使用标签：在JSP页面中使用标签
+
+导入标签库的语法：
+```
+<%@ taglib uri="tagliburi" prefix="tagPrefix" %>
+```
+其中uri属性指定标签库的URI，这个URI可以确定一个标签库，这个URI就是TLD文件中定义的uri属性对应。而prefix属性指定标签库前缀，即所有使用该前缀的标签将由此标签库处理。  
+  
+## 带属性的标签
+前面的简单标签既没有属性，也没有标签体，用法和功能比较简单。实际上还有如下两种常用的标签：
+- 带属性的标签
+- 带标签体的标签
+
+带属性标签必须为每个属性提供对应的setter和getter方法。下面是一个带属性标签的示例：
+```
+public class QueryTag extends SimpleTagSupport {  
+    // 定义成员变量来代表标签的属性  
+    private String driver;  
+    private String url;  
+    private String user;  
+    private String pass;  
+    private String sql;  
+  
+    // 执行数据库访问的对象  
+    private Connection conn = null;  
+    private Statement stmt = null;  
+    private ResultSet rs = null;  
+    private ResultSetMetaData rsmd = null;  
+      
+    //省略各成员变量的setter和getter方法  
+    ...  
+  
+    public void doTag() throws JspException, IOException {  
+        try {  
+            // 注册驱动  
+            Class.forName(driver);  
+            // 获取数据库连接  
+            conn = DriverManager.getConnection(url, user, pass);  
+            // 创建Statement对象  
+            stmt = conn.createStatement();  
+            // 执行查询  
+            rs = stmt.executeQuery(sql);  
+            rsmd = rs.getMetaData();  
+            // 获取列数目  
+            int columnCount = rsmd.getColumnCount();  
+            // 获取页面输出流  
+            Writer out = getJspContext().getOut();  
+            // 在页面输出表格  
+            out.write("<table border='1' bgColor='#9999cc' width='400'>");  
+            // 遍历结果集  
+            while (rs.next()) {  
+                out.write("<tr>");  
+                // 逐列输出查询到的数据  
+                for (int i = 1; i <= columnCount; i++) {  
+                    out.write("<td>");  
+                    out.write(rs.getString(i));  
+                    out.write("</td>");  
+                }  
+                out.write("</tr>");  
+            }  
+        } catch (ClassNotFoundException cnfe) {  
+            cnfe.printStackTrace();  
+            throw new JspException("自定义标签错误" + cnfe.getMessage());  
+        } catch (SQLException ex) {  
+            ex.printStackTrace();  
+            throw new JspException("自定义标签错误" + ex.getMessage());  
+        } finally {  
+            // 关闭结果集  
+            try {  
+                if (rs != null)  
+                    rs.close();  
+                if (stmt != null)  
+                    stmt.close();  
+                if (conn != null)  
+                    conn.close();  
+            } catch (SQLException sqle) {  
+                sqle.printStackTrace();  
+            }  
+        }  
+    }  
+}  
+```
+为标签处理类定义成员变量即可代表标签的属性，程序需要为5个属性提供setter和getter方法。  
+该标签输出的内容依然由doTage()方法决定。  
+  
+对于有属性的标签，需要在tld中为<tag../>元素增加<attribute../>子元素，每个<attribute../>定义一个标签属性。<attribute../> 子元素通常还需要指定如下几个子元素：
+- **name**：设置属性名，子元素的值是字符串内容
+- **required**：设置该属性是否为必须属性，该子元素的值时true或false
+- **fragment**：设置该属性是否支持JSP脚本、表达式等动态内容，子元素的值true或false
+
+为配置以上的标签，需要在tld文件中增加如下配置片段：
+```
+<tag>  
+    <!-- 定义标签名 -->  
+    <name>query</name>  
+    <!-- 定义标签处理类 -->  
+    <tag-class>lee.QueryTag</tag-class>  
+    <!-- 定义标签体为空 -->  
+    <body-content>empty</body-content>  
+    <!-- 配置标签属性:driver -->  
+    <attribute>  
+        <name>driver</name>   
+        <required>true</required>  
+        <fragment>true</fragment>  
+    </attribute>  
+    <!-- 配置标签属性:url -->  
+    <attribute>  
+        <name>url</name>   
+        <required>true</required>  
+        <fragment>true</fragment>  
+    </attribute>  
+    <!-- 配置标签属性:user -->  
+    <attribute>  
+        <name>user</name>   
+        <required>true</required>  
+        <fragment>true</fragment>  
+    </attribute>  
+    <!-- 配置标签属性:pass -->  
+    <attribute>  
+        <name>pass</name>   
+        <required>true</required>  
+        <fragment>true</fragment>  
+    </attribute>  
+    <!-- 配置标签属性:sql -->  
+    <attribute>  
+        <name>sql</name>   
+        <required>true</required>  
+        <fragment>true</fragment>  
+    </attribute>  
+</tag>  
+```
+配置完毕后，就可在页面中使用标签了，先导入标签库，然后使用标签：
+```
+<%@ taglib uri="http://www.crazyit.org/mytaglib" prefix="mytag"%>  
+<!-- 使用标签 ，其中mytag是标签前缀，根据taglib的编译指令，  
+    mytag前缀将由http://www.crazyit.org/mytaglib的标签库处理 -->  
+......  
+<mytag:query  
+    driver="com.mysql.jdbc.Driver"  
+    url="jdbc:mysql://localhost:3306/javaee"  
+    user="root"  
+    pass="32147"  
+    sql="select * from news_inf"/>  
+```
+在JSP页面只需使用简单的标签，即可完成复杂的功能。这也正是自定义标签库的目的——以简单的标签，隐藏复杂的逻辑。  
+但不推荐在标签处理类中访问数据库，因为标签库是表现层组件，不应该包含任何业务逻辑实现的代码，更不应该执行数据库访问，它只负责显示逻辑。  
+  
+## 带标签体的标签
+带标签体的标签，可以在标签内嵌入其他内容（包括静态的HTML内容和动态的JSP内容），通常用于完成一些逻辑运算。示例如下：  
+一样，先定义一个标签处理类：  
+```
+public class IteratorTag extends SimpleTagSupport{
+    //标签属性，用于指定需要被迭代的集合
+    private String collection;
+    //标签属性，指定迭代集合元素，为集合元素指定的名称
+    private String item;
+    //省略collection的setter和getter方法
+    ...
+    //省略item的setter和getter方法
+    ...
+    //标签的处理方法，标签处理类只需要重写doTag()方法
+    public void doTag() throws JspException,IOException{
+        //从page scope中获取名为collection的集合
+        Collection itemList=(Collection)getJspContext().getAttribute(collection);
+        //遍历集合
+        for(Object s:itemList){
+            //将集合的元素设置到page范围内
+            getJspContext().setAttribute(item,s);
+            //输出标签体
+            getJspBody().invoke(null);
+        }
+    }
+}
+```
+标签处理类doTag()方法首先从page范围内获取了指定名称的Collection对象，然后遍历Collection对象的元素，每次遍历都调用getJspBody()方法，该方法返回该标签所包含的标签体：JSPFragment对象，执行该对象的invoke()方法，即可输出标签体内容。该标签的作用是：遍历指定集合，每遍历一个集合元素，技术处标签体一次。      
+  
+因为该标签的标签体不为空，配置该标签时指定body-content为scriptless，该标签的配置代码如下：  
+```
+<tag>  
+    <!-- 定义标签名 -->  
+    <name>iterator</name>  
+    <!-- 定义标签处理类 -->  
+    <tag-class>lee.IteratorTag</tag-class>  
+    <!-- 定义标签体不允许出现JSP脚本 -->  
+    <body-content>scriptless</body-content>  
+    <!-- 配置标签属性:collection -->  
+    <attribute>  
+        <name>collection</name>   
+        <required>true</required>  
+        <fragment>true</fragment>  
+    </attribute>  
+    <!-- 配置标签属性:item -->  
+    <attribute>  
+        <name>item</name>   
+        <required>true</required>  
+        <fragment>true</fragment>  
+    </attribute>  
+</tag>  
+```
+在JSP页面中使用这个标签，示例如下：
+```
+<body>  
+    <h2>带标签体的标签-迭代器标签</h2>  
+    <hr />  
+    <%  
+        //创建一个List对象  
+        List<String> a = new ArrayList<String>();  
+        a.add("疯狂Java");  
+        a.add("www.crazyit.org");  
+        a.add("www.fkit.org");  
+        //将List对象放入page范围内  
+        pageContext.setAttribute("a", a);  
+    %>  
+    <table border="1" bgcolor="#aaaadd" width="300">  
+        <!-- 使用迭代器标签，对a集合进行迭代 -->  
+        <mytag:iterator collection="a" item="item">  
+            <tr>  
+                <td>${pageScope.item}</td>  
+            </tr>  
+        </mytag:iterator>  
+    </table>  
+</body>  
+```
+
+> 提示：  
+在严格MVC规范下，JSP页面只负责显示数据————而数据通常由控制器（Servlet）放入request范围内，而JSP页面就通过iterator标签迭代输出request范围内的数据。  
+
+## 以页面片段作为属性的标签
+JSP2规范的自定义标签还允许直接将一段“页面片段”作为属性，这种方式给自定义标签提供了更大的灵活性。    
+  
+以“页面片段”为属性的标签与与普通标签区别并不大，只有两个简单的改变：
+- 标签处理类中定义类型为JSPFragment的属性，该属性代表了“页面片段”  
+- 使用标签库，通过<jsp:attribute.../>动作指令为标签的属性指定值
+
+下面程序定义了一个标签处理类，该标签处理类中定义了一个JspFragment类型的属性，即表明该标签允许使用“页面片段”类型的属性。  
+```
+public class FragmentTag extends SimpleTagSupport {  
+    private JspFragment fragment;  
+    //省略fragment的setter和getter方法  
+    @Override  
+    public void doTag() throws JspException, IOException {  
+        JspWriter out = getJspContext().getOut();  
+        out.println("<div style='padding:10px;border:1px solid black;" + ";border-radius:20px'>");  
+        out.println("<h3>下面是动态传入的JSP片段</h3>");  
+        // 调用、输出“页面片段”  
+        fragment.invoke(null);  
+        out.println("</div");  
+    }  
+}  
+```
+上面的程序中定义了fragment成员变量，该成员变量代表了使用该标签时的“页面片段”，配置该标签与配置普通标签并无任何区别，增加如下配置片段即可：
+```
+<tag>  
+    <!-- 定义标签名 -->  
+    <name>fragment</name>  
+    <!-- 定义标签处理类 -->  
+    <tag-class>lee.FragmentTag</tag-class>  
+    <!-- 指定该标签不支持标签体 -->  
+    <body-content>empty</body-content>  
+    <!-- 定义标签属性：fragment -->  
+    <attribute>  
+        <name>fragment</name>  
+        <required>true</required>  
+        <fragment>true</fragment>  
+    </attribute>  
+</tag>  
+```
+就是一个普通的带属性标签，该标签的标签体为空。  
+由于该标签需要一个fragment属性，该属性的类型为JspFragment，因此使用该标签时需要使用<jsp:attribute../>动作指令来设置属性值：  
+```
+<h2>下面显示的是自定义标签中的内容</h2>
+<mytag:fragment>
+    <jsp:attribute name="fragment">
+    <%-- 使用jsp:attribute标签传入fragment参数（该注释不能放在fragment内） -->  
+    <%-- 下面是动态的JSP页面片段 --%>  
+    <mytag:helloWorld />  
+</jsp:attribute>  
+</mytag:fragment>  
+<br />  
+<mytag:fragment>  
+    <jsp:attribute name="fragment">  
+    <%-- 下面是动态的JSP页面片段 --%>  
+    ${pageContext.request.remoteAddr}  
+</jsp:attribute>  
+</mytag:fragment>  
+```
+上面的<jsp:attribute>用于为标签的fragment属性赋值，第一个例子使用了另一个简单标签来生成页面片段；第二个例子使用了JSP2的EL来生成页面片段。
+
+> 提示：  
+由于程序指定了fragment标签的标签体为empty，因此程序中fragment开始标签和结束标签之间只能使用<jsp:attribute.../>子元素，不允许出现其他内容，甚至连注释都不允许。  
+
+## 动态属性的标签
+前面的标签的属性个数是确定的，绝大部分情况下这种带属性的标签能处理得很好，但在某些特殊情况下，需要传入自定义标签的属性个数是不确定的，属性名也不确定，这就需要借助于动态属性的标签了。  
+  
+动态属性标签比普通标签多了两个额外需求：
+- 标签处理类还需要实现DynamicAttributes接口
+- 配置标签时通过<dynamic-attributes.../>子元素指定该标签支持动态属性
+```
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.jsp.JspException;
+import javax.servlet.jsp.JspWriter;
+import javax.servlet.jsp.tagext.DynamicAttributes;
+import javax.servlet.jsp.tagext.SimpleTagSupport;
+
+/**
+ * SimpleTag handler that echoes all its attributes
+ */
+public class EchoAttributesTag
+    extends SimpleTagSupport
+    implements DynamicAttributes
+{
+    private final List<String> keys = new ArrayList<>();
+    private final List<Object> values = new ArrayList<>();
+
+    @Override
+    public void doTag() throws JspException, IOException {
+        JspWriter out = getJspContext().getOut();
+        for( int i = 0; i < keys.size(); i++ ) {
+            String key = keys.get( i );
+            Object value = values.get( i );
+            out.println( "<li>" + key + " = " + value + "</li>" );
+        }
+    }
+
+    @Override
+    public void setDynamicAttribute( String uri, String localName,
+        Object value )
+        throws JspException
+    {
+        keys.add( localName );
+        values.add( value );
+    }
+}
+```
+上面的标签处理类实现了DynaAttributesTag接口，就是动态属性标签处理类必须实现的接口，实现该接口必须实现setDynaAttribute()方法，该方法用于为该标签处理类动态地添加属性名和属性值。  
+配置该标签时需要额外地指定<dynamic-attribute../>子元素，表明该标签为动态属性标签。  
+```
+<tag>
+    <name>dynaAttr</name>
+    <tag-class>DynaAttribtuesTag</tag-class>
+    <body-content>empty</body-conten>
+    <dynamic-attribute>true</dynamic-attribute>
+</tag>
+```
+使用如下
+```
+<!-- 导入标签库，指定mytag前缀的标签，  
+    由http://www.crazyit.org/mytaglib的标签库处理 -->  
+<%@ taglib uri="http://www.crazyit.org/mytaglib" prefix="mytag"%>  
+...  
+<h2>下面显示的是自定义标签中的内容</h2>  
+<h4>指定两个属性</h4>  
+<mytag:dynaAttr name="crazyit" url="crazyit.org" />  
+<br />  
+<h4>指定四个属性</h4>  
+<mytag:dynaAttr 书名="疯狂Java讲义" 价格="99.0" 出版时间="2008年" 描述="Java图书" />  
+```
+
+# Filter介绍
