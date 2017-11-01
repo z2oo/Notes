@@ -1444,3 +1444,256 @@ public class EchoAttributesTag
 ```
 
 # Filter介绍
+Filter可认为是Servlet的一种加强版，它主要用于对用户请求进行预处理，也可以对HttpServletResponse进行后处理，是一个典型的处理链。  
+使用Filter完整的流程是：Filter对用户请求进行预处理，接着将请求交给Servlet进行处理并生成响应，最后Filter再对服务器响应进行后处理。  
+
+Filter相当于一个中间的盒子，在HttpServletRequest到达Servlet之前，拦截客户端的HttpServletRequest。  
+然后，根据需要检查HttpServletRequest，也可以修改HttpServletRequest头和数据。然后传递给Servlet。  
+在HttpServletResponse到达客户端之前，拦截HttpServletResponse，根据需要检查，也可以修改HttpServletResponse头和数据。  
+  
+Filter有如下几个种类：
+- 用户授权的Filter：Filter负责检查用户请求，根据请求过滤用户非法请求。  
+- 日志Filter：详细记录某些特殊的用户请求。  
+- 负责解码的Filter：包括对非标准的用户请求。   
+- 能该表XML内容的XSLT Filter等。    
+- Filter可负责拦截多个请求或响应；一个请求或响应也可被多个Filter拦截。  
+
+  
+创建Filter的两个步骤：
+1. 创建Filter处理类
+2. web.xml文件中配置Filter
+
+## 创建Filter类
+创建Filter必须实现javax.Servlet.Filter接口，在该接口中定义了如下三个方法：  
+- **void init(FilterConfig config)**：用于完成Filter的初始化  
+- **void destroy()**：用于Filter销毁前，完成某些资源的回收  
+- **void doFilter(ServletRequest request , ServletResponse response , FilterChain chain)**：实现过滤功能，该方法就是对每个请求及响应增加的额外处理    
+
+下面是一个日志Filter，这个Filter负责拦截所有的用户请求，并将请求的信息记录在日志中。  
+```
+@WebFilter(filterName = "log", urlPatterns = { "/*" })  
+public class LogFilter implements Filter {  
+    // FilterConfig可用于访问Filter的配置信息  
+    private FilterConfig config;  
+    // 实现初始化方法  
+    public void init(FilterConfig config) {  
+        this.config = config;  
+    }  
+    // 实现销毁方法  
+    public void destroy() {  
+        this.config = null;  
+    }  
+    // 执行过滤的核心方法  
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)  
+            throws IOException, ServletException {  
+        // ---------下面代码用于对用户请求执行预处理---------  
+        // 获取ServletContext对象，用于记录日志  
+        ServletContext context = this.config.getServletContext();  
+        long before = System.currentTimeMillis();  
+        System.out.println("开始过滤...");  
+        // 将请求转换成HttpServletRequest请求  
+        HttpServletRequest hrequest = (HttpServletRequest) request;  
+        // 输出提示信息  
+        System.out.println("Filter已经截获到用户的请求的地址： " + hrequest.getServletPath());  
+        // Filter只是链式处理，请求依然放行到目的地址  
+        chain.doFilter(request, response);//放行用户请求  
+        // ---------下面代码用于对服务器响应执行后处理---------  
+        long after = System.currentTimeMillis();  
+        // 输出提示信息  
+        System.out.println("过滤结束");  
+        // 输出提示信息  
+        System.out.println("请求被定位到" + hrequest.getRequestURI() + "   所花的时间为: " + (after - before));  
+    }  
+}  
+```
+上述代码实现了doFilter()方法，实现了此方法就可以对用户请求进行预处理，也可以实现对服务器响应进行后处理————它们的分界线为是否调用chain.doFilter()，执行该方法之前，即对用户请求进行预处理；执行该方法后，即对服务器响应进行后处理。  
+  
+这个Filter的作用是拦截所有的请求，然后输出请求地址，然后放行这个请求，然后，输出响应地址，并且输出整个响应过程所需要的时间。这只是个简单的拦截器，我们完全也可以在Filter中根据用户请求的HttpSession，判断用户权限是否足够。如果权限不够，直接调用重定向即可，无须调用chain.doFilter(request, response);方法。  
+  
+  
+## 配置Filter
+Filter可以认为是Servlet的“增强版”，因此配置Filter与配置Servlet非常相似，都需要配置如下两个部分：
+- 配置Filter名
+- 配置Filter拦截URL模式
+
+区别在于：Servlet通常指配置一个URL，而Filter可以同时拦截多个请求的URL。因此，在配置Filter的URL模式时通常会使用**模式字符串**，使得Filter可以拦截多个请求。  
+与配置Servlet相似的是，配置Filter同样有两种方式：
+- 在Filter类中通过注解进行配置
+- 在web.xml文件中通过配置文件进行配置
+
+上面Filter类代码使用@WebFilter配置该Filter的名字为log，它会拦截向/*发送的所有请求。而用web.xml文件配置其作用相同，如下：  
+```
+<!-- 定义Filter -->  
+<filter>  
+    <!-- Filter的名字，相当于指定@WebFilter  
+        的filterName属性 -->  
+    <filter-name>log</filter-name>  
+    <!-- Filter的实现类 -->  
+    <filter-class>lee.LogFilter</filter-class>   
+</filter>  
+<!-- 定义Filter拦截的URL地址 -->  
+<filter-mapping>  
+    <!-- Filter的名字 -->  
+    <filter-name>log</filter-name>  
+    <!-- Filter负责拦截的URL，相当于指定@WebFilter  
+        的urlPatterns属性 -->  
+    <url-pattern>/*</url-pattern>  
+</filter-mapping>  
+```
+上面配置Filter时指定url-pattern为/*，即表示该Filter会拦截所有的用户请求。  
+  
+@WebFilter注解常用属性(都是非必须)：
+- **filterName**：指定该Filter的名称  
+- **urlPatterns / value**：这两个属性的作用完全相同。都指定该Filter所拦截的URL  
+- **initParams**：用于为该Filter配置参数  
+- **servletNames**：该属性值指定多个Servlet的名称，用于指定该Filter仅对这几个Servlet执行过滤  
+- **displayName**：指定该Filter的显示名  
+- **asyncSupported**：指定该Filter是否支持异步操作模式。  
+- **dispatcherTypes**：指定该Filter仅对那种dispatcher模式的请求进行过滤。该属性支持ASYNC、ERROR、FORWARD、INCLUDE、REQUEST这5个值的任何组合。默认值为同时过滤5种模式的请求。  
+  
+实际上，Filter和Servlet非常相似，区别只是Filter的doFilter()方法里多了一个FilterChain的参数，通过该参数可以控制是否放行用户请求。  
+在实际项目中，Filter里的doFilter()方法里的代码就是从多个Servlet的service()方法里抽取出通用代码，通过使用Filter可以实现更好的代码复用。  
+    
+  
+由于Filter和Servlet如此相似，所以Filter和Servlet具有完全相同的生命周期行为，且Filter也可以通过<init-param.../>元素或@WebFilter的initParams属性来配置初始化参数，获取Filter的初始化参数则使用FilterConfig的getInitParameter()方法。  
+  
+下面定义一个较为使用的Filter，该Filter对用户请求进行过滤，Filter将通过doFilter方法来设置request编码的字符集，从而避免每个JSP、Servlet都需要设置；而且还会验证用户是否登录  
+```
+@WebFilter(filterName = "authority", urlPatterns = { "/*" }, initParams = {  
+        @WebInitParam(name = "encoding", value = "GBK"), @WebInitParam(name = "loginPage", value = "/login.jsp") })  
+public class AuthorityFilter implements Filter {  
+    // FilterConfig可用于访问Filter的配置信息  
+    private FilterConfig config;  
+    // 实现初始化方法  
+    public void init(FilterConfig config) {  
+        this.config = config;  
+    }  
+    // 实现销毁方法  
+    public void destroy() {  
+        this.config = null;  
+    }  
+    // 执行过滤的核心方法  
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)  
+            throws IOException, ServletException {  
+        // 获取该Filter的配置参数  
+        String encoding = config.getInitParameter("encoding");  
+        String loginPage = config.getInitParameter("loginPage");  
+        // 设置request编码用的字符集  
+        request.setCharacterEncoding(encoding);   
+        HttpServletRequest requ = (HttpServletRequest) request;  
+        HttpSession session = requ.getSession(true);  
+        // 获取客户请求的页面  
+        String requestPath = requ.getServletPath();  
+        // 如果session范围的user为null，即表明没有登录  
+        // 且用户请求的既不是登录页面，也不是处理登录的页面  
+        if (session.getAttribute("user") == null && !requestPath.endsWith(loginPage)) {  
+            // forward到登录页面  
+            request.setAttribute("tip", "您还没有登录");  
+            request.getRequestDispatcher(loginPage).forward(request, response);  
+        }  
+        // "放行"请求  
+        else {  
+            chain.doFilter(request, response);  
+        }  
+    }  
+}  
+```
+通过@WebFilter的initParams属性可以为该Filter配置初始化参数，它可以接受多个@WebInitParam，每个@WebInitParam指定一个初始化参数。  
+当然也可以使用web.xml文件中配置该Filter：
+```
+<!-- 定义Filter -->  
+<filter>  
+    <!-- Filter的名字 -->  
+    <filter-name>authority</filter-name>  
+    <!-- Filter的实现类 -->  
+    <filter-class>lee.AuthorityFilter</filter-class>  
+    <!-- 下面两个init-param元素配置了两个参数 -->  
+    <init-param>  
+        <param-name>encoding</param-name>  
+        <param-value>GBK</param-value>  
+    </init-param>  
+    <init-param>  
+        <param-name>loginPage</param-name>  
+        <param-value>/login.jsp</param-value>  
+    </init-param>  
+</filter>  
+<!-- 定义Filter拦截的URL地址 -->  
+<filter-mapping>  
+    <!-- Filter的名字 -->  
+    <filter-name>authority</filter-name>  
+    <!-- Filter负责拦截的URL -->  
+    <url-pattern>/*</url-pattern>  
+</filter-mapping>  
+```
+实现的效果是，如果没有的登录，则只能访问/login.jsp，反之则可以自由访问其他页面。  
+
+## 使用URL Rewrite实现网站伪静态
+对于以JSP为表现层开发的动态网站来说，用户访问的URL通常有如下形式：
+```
+xx.jsp?param=value...
+```
+大部分搜索引擎都会优先考虑收录静态的HTML页面，而不是这种动态的\*.jsp、\*.php页面。但实际上绝大多数网站都是动态的，不可能全部是静态的HTML页面，因此互联网上的大部分网站都会考虑使用伪静态——就是\*.jsp、*.php这种动态URL伪装成静态的HTML页面。  
+  
+对于Java Web应用来说，要实现伪静态非常简单：可以通过Filter拦截所有发向\*.html请求，然后按某种规则将请求forward到实际的*.jsp页面即可。现有的URL Rewrite开源项目为这种思路提供了实现，使用URL Rewrite实现网站伪静态也很简单。  
+  
+利用URL Rewrite实现网站伪静态：
+1. 登录http://www.tuckkey.org/urlrewrite/站点下载URL Rewrite的最新版本  
+2. 直接下载URL Rewrite的JAR包，并将该JAR包赋值到Web应用的WEB-INF\lib目录下  
+3. 在web.xml文件中配置启用URL Rewrite Filter，在web.xml文件中添加如下配置片段：
+```
+<filter>  
+    <filter-name>UrlRewriteFilter</filter-name>  
+    <filter-class>org.tuckey.web.filters.urlrewrite.UrlRewriteFilter</filter-class>  
+</filter>  
+<filter-mapping>  
+    <filter-name>UrlRewriteFilter</filter-name>  
+    <url-pattern>/*</url-pattern>  
+    <dispatcher>REQUEST</dispatcher>  
+    <dispatcher>FORWARD</dispatcher>  
+</filter-mapping>  
+```
+注意：需要在所有的servlet mappings的上面  
+4. 在应用的WEB-INF路径下增加urlrewrite.xml文件，该文件定义了伪静态映射规则，这份伪静态规则是基于正则表达式。  
+```
+<?xml version="1.0" encoding="GBK"?>  
+<!DOCTYPE urlrewrite PUBLIC "-//tuckey.org//DTD UrlRewrite 3.2//EN"  
+    "http://tuckey.org/res/dtds/urlrewrite3.2.dtd">  
+<urlrewrite>  
+    <rule>  
+        <!-- 所有配置如下正则表达式的请求 -->  
+        <from>/userinf-(\w*).html</from>  
+        <!-- 将被forward到如下JSP页面，其中$1代表  
+            上面第一个正则表达式所匹配的字符串 -->  
+        <to type="forward">/userinf.jsp?username=$1</to>  
+    </rule>  
+</urlrewrite>  
+```
+上面的规则文件中只定义了一个简单的规则：所有发向/userinf-(\w\*).html的请求都将被forward到userinf.jsp，并将(\w*)正则表达式所匹配的内容作为username参数值。根据这个伪静态规则，需要为该应用提供了一个userinf.jsp页面，该页面只是一个模拟了一个显示用户信息的页面，页面代码如下：  
+```
+<%@ page contentType="text/html; charset=GBK" language="java"  
+    errorPage=""%>  
+<%  
+    // 获取请求参数  
+    String user = request.getParameter("username");  
+%>  
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"  
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">  
+<html xmlns="http://www.w3.org/1999/xhtml">  
+<head>  
+<title><%=user%>的个人信息</title>  
+<meta name="website" content="http://www.crazyit.org" />  
+</head>  
+<body>  
+    <%  
+        // 此处应该通过数据库读取该用户对应的信息  
+        // 此处只是模拟，因此简单输出：  
+        out.println("现在时间是：" + new java.util.Date() + "<br/>");  
+        out.println("用户名：" + user);  
+    %>  
+</body>  
+</html>  
+```
+  
+    
+      
+# Listener介绍
