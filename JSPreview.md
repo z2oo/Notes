@@ -1692,7 +1692,8 @@ xx.jsp?param=value...
     %>  
 </body>  
 </html>  
-```
+```  
+地址栏仍然会显示为html结尾的地址
   
     
       
