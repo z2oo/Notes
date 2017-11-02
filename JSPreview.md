@@ -1692,9 +1692,262 @@ xx.jsp?param=value...
     %>  
 </body>  
 </html>  
-```  
+```
 地址栏仍然会显示为html结尾的地址
-  
     
       
 # Listener介绍
+当Web应用在Web容器中运行时，Web应用内部会不断地发生各种事件：如Web应用被启动、Web应用被停止，用户session开始、用户session结束、用户请求到达等，通常来说，这些Web事件对Web开发者是透明的。  
+  
+Servlet API提供了大量监听器来监听Web项目的内部事件，从而允许当Web内部事件发生时回调事件监听器内的方法。  
+使用Listener只需要两个步骤：
+- 定义Listener实现类
+- 通过注解或web.xml文件中配置Listener
+
+## 实现Listener类
+常用的Web事件监听器接口有如下几个：
+- **ServletContextListener**：用于监听Web应用的启动和关闭  
+- **ServletContextAttributeListener**：用于监听ServletContext范围（application）内属性的改变  
+- **ServletRequestListener**：用于监听用户请求  
+- **ServletRequestAttributeListener**：用于监听ServletRequest范围（request）内属性的改变  
+- **HttpSessionListener**：用于监听用户session的开始和结束  
+- **HttpSessionAttributeListener**：用于监听HttpSession范围（session）内属性的改变
+
+从上面可以看出，ServletContextListener的作用有点类似load-on-startup Servlet，都可以用于在Web应用启动时，回调方法来启动某些后台程序，这些后台程序负责为系统运行提供支持。  
+  
+  
+下面创建一个获取数据库连接的Listener，该Listener会在应用启动时获取数据库连接，并将获得的连接设置为application范围内的属性：
+```
+@WebListener  
+public class GetConnListener implements ServletContextListener {  
+    // 应该启动时，该方法被调用。  
+    public void contextInitialized(ServletContextEvent sce) {  
+        try {  
+            // 取得该应用的ServletContext实例  
+            ServletContext application = sce.getServletContext();  
+            // 从配置参数中获取驱动  
+            String driver = application.getInitParameter("driver");  
+            // 从配置参数中获取数据库url  
+            String url = application.getInitParameter("url");  
+            // 从配置参数中获取用户名  
+            String user = application.getInitParameter("user");  
+            // 从配置参数中获取密码  
+            String pass = application.getInitParameter("pass");  
+            // 注册驱动  
+            Class.forName(driver);  
+            // 获取数据库连接  
+            Connection conn = DriverManager.getConnection(url, user, pass);  
+            // 将数据库连接设置成application范围内的属性  
+            application.setAttribute("conn", conn);  
+        } catch (Exception ex) {  
+            System.out.println("Listener中获取数据库连接出现异常" + ex.getMessage());  
+        }  
+    }  
+  
+    // 应该关闭时，该方法被调用。  
+    public void contextDestroyed(ServletContextEvent sce) {  
+        // 取得该应用的ServletContext实例  
+        ServletContext application = sce.getServletContext();  
+        Connection conn = (Connection) application.getAttribute("conn");  
+        // 关闭数据库连接  
+        if (conn != null) {  
+            try {  
+                conn.close();  
+            } catch (SQLException ex) {  
+                ex.printStackTrace();  
+            }  
+        }  
+    }  
+}  
+```
+上面代码重写了ServletContextListener的contextInitialized()、contextDestroyed()方法，这两个方法分别在应用启动、关闭时被触发。  
+  
+> **在本例中的ServletContextListener把一个数据库连接（Connection实例）设置成application属性，这样将导致所有页面都使用相同的Connection实例，实际上这种做法的性能非常差。
+实用的做法是：应用启动时将一个数据源（jaavx.sql.DataSource实例）设置成application属性，而所有JSP页面都通过DataSource实例来取得数据库连接，再进行数据库访问，这样就好多了。**
+  
+ServletContextListener获取的是Web应用的配置参数，而不是像Servlet和Filter获取本身的配置参数。这是因为配置Listener时十分简单，只要简单地指定Listener实现类即可，不能配置初始化参数。  
+  
+## 配置Listener
+配置Listener只要向Web应用注册Listener实现类即可，无须配置参数之类的东西，因此十分简单。为Web应用配置Listener也有两种方式：
+- 使用@WebListener修饰Listener实现类即可
+- 在web.xml文档中使用<listener../>元素进行配置
+  
+使用@WebListener时通常无须指定任何属性，只要使用该注解修饰Listener实现类即可向Web应用注册该监听器。  
+在web.xml中使用<listener../>元素进行配置时只要配置如下子元素即可。
+- listener-class：指定Listener实现类
+
+  
+## 使用ServletContextAttributeListener
+ServletContextAttributeListener用于监听ServletContext（application）范围内属性的变化，实现该接口的监听器需要实现如下三个方法：  
+- **attributeAdded(ServletContextAttributeEvent event)**：当程序把一个属性存入application范围时触发该方法  
+- **attributeRemoved(ServletContextAttributeEvent event)**：当程序把一个属性从application范围删除时触发该方法  
+- **attributeReplaced(ServletContextAttributeEvent event)**：当程序替换application范围内的属性时将触发该方法
+
+  
+```
+@WebListener  
+public class MyServletContextAttributeListener implements ServletContextAttributeListener {  
+    // 当程序向application范围添加属性时触发该方法  
+    public void attributeAdded(ServletContextAttributeEvent event) {  
+        ServletContext application = event.getServletContext();  
+        // 获取添加的属性名和属性值  
+        String name = event.getName();  
+        Object value = event.getValue();  
+        System.out.println(application + "范围内添加了名为" + name + "，值为" + value + "的属性!");  
+    }  
+  
+    // 当程序从application范围删除属性时触发该方法  
+    public void attributeRemoved(ServletContextAttributeEvent event) {  
+        ServletContext application = event.getServletContext();  
+        // 获取被删除的属性名和属性值  
+        String name = event.getName();  
+        Object value = event.getValue();  
+        System.out.println(application + "范围内名为" + name + "，值为" + value + "的属性被删除了!");  
+    }  
+  
+    // 当application范围的属性被替换时触发该方法  
+    public void attributeReplaced(ServletContextAttributeEvent event) {  
+        ServletContext application = event.getServletContext();  
+        // 获取被替换的属性名和属性值  
+        String name = event.getName();  
+        Object value = event.getValue();  
+        System.out.println(application + "范围内名为" + name + "，值为" + value + "的属性被替换了!");  
+    }  
+}  
+```
+  
+    
+      
+## 使用ServletRequestListener和ServletRequestAttributeListener
+ServletRequestListener用于监听用户请求的到达，实现该接口的监听器需要实现如下两个方法：
+- **requestInitialized(ServletRequestEvent sre)**：用户请求到达、被初始化时触发该方法  
+- **requestDestroyed(ServletRequestEvent sre)**：用户请求结束、被销毁时触发该方法
+
+ServletRequestAttributeListener则用于监听ServletRequest(request)范围内属性的变化，实现该接口的监听器需要实现attributeAdded()、attributeRemoved()、attributeReplaced()三个方法。   
+  
+  
+ServletRequestAttributeListener与ServletContextAttributeListener的作用相似，都用于监听属性的改变，只是ServletRequestAttributeListener监听request范围内属性的改变。    
+可以采用一个监听器类来监听多种事件，只要这个监听器类实现多个监听器接口即可  
+```
+@WebListener  
+public class RequestListener implements ServletRequestListener, ServletRequestAttributeListener {  
+    // 当用户请求到达、被初始化时触发该方法  
+    public void requestInitialized(ServletRequestEvent sre) {  
+        HttpServletRequest request = (HttpServletRequest) sre.getServletRequest();  
+        System.out.println("----发向" + request.getRequestURI() + "请求被初始化----");  
+    }  
+  
+    // 当用户请求结束、被销毁时触发该方法  
+    public void requestDestroyed(ServletRequestEvent sre) {  
+        HttpServletRequest request = (HttpServletRequest) sre.getServletRequest();  
+        System.out.println("----发向" + request.getRequestURI() + "请求被销毁----");  
+    }  
+  
+    // 当程序向request范围添加属性时触发该方法  
+    public void attributeAdded(ServletRequestAttributeEvent event) {  
+        ServletRequest request = event.getServletRequest();  
+        // 获取添加的属性名和属性值  
+        String name = event.getName();  
+        Object value = event.getValue();  
+        System.out.println(request + "范围内添加了名为" + name + "，值为" + value + "的属性!");  
+    }  
+  
+    // 当程序从request范围删除属性时触发该方法  
+    public void attributeRemoved(ServletRequestAttributeEvent event) {  
+        ServletRequest request = event.getServletRequest();  
+        // 获取被删除的属性名和属性值  
+        String name = event.getName();  
+        Object value = event.getValue();  
+        System.out.println(request + "范围内名为" + name + "，值为" + value + "的属性被删除了!");  
+    }  
+  
+    // 当request范围的属性被替换时触发该方法  
+    public void attributeReplaced(ServletRequestAttributeEvent event) {  
+        ServletRequest request = event.getServletRequest();  
+        // 获取被替换的属性名和属性值  
+        String name = event.getName();  
+        Object value = event.getValue();  
+        System.out.println(request + "范围内名为" + name + "，值为" + value + "的属性被替换了!");  
+    }  
+}  
+```
+  
+    
+      
+## 使用HttpSessionListener 和HttpSessionAttributeListener 
+HttpSessionListener 用于监听用户session的创建和销毁，实现该接口的监听器需要实现如下两个方法：
+- sessionCreated(HttpSessionEvent se)：用户与服务器的会话开始、创建时触发该方法  
+- sessionDestroyed(HttpSessionEvent se)：用户与服务器的会话断开、销毁时触发该方法
+  
+  
+HttpSessionAttributeListener则用于监听HttpSession（session）范围内属性的变化，实现该接口的监听器需要实现attributeAdded()、attributeRemoved()、attributeReplacd()三个方法。  
+由此可见，HttpSessionAttributeListener与ServletContextAttributeListener的作用相似，都用于监听属性的改变。  
+只是HttpSessionAttributeListener监听session范围内属性的改变，而ServletContextAttributeListener监听的是application范围内属性的改变。  
+实现HttpSessionListener接口的监听器可以监听每个用户会话的开始和断开，因此可以通过该监听器来监听系统的在线用户。  
+```
+@WebListener  
+public class OnlineListener implements HttpSessionListener {  
+    // 当用户与服务器之间开始session时触发该方法  
+    public void sessionCreated(HttpSessionEvent se) {  
+        HttpSession session = se.getSession();  
+        ServletContext application = session.getServletContext();  
+        // 获取session ID  
+        String sessionId = session.getId();  
+        // 如果是一次新的会话  
+        if (session.isNew()) {  
+            String user = (String) session.getAttribute("user");  
+            // 未登录用户当游客处理  
+            user = (user == null) ? "游客" : user;  
+            Map<String, String> online = (Map<String, String>) application.getAttribute("online");  
+            if (online == null) {  
+                online = new Hashtable<String, String>();  
+            }  
+            // 将用户在线信息放入Map中  
+            online.put(sessionId, user);  
+            application.setAttribute("online", online);  
+        }  
+    }  
+  
+    // 当用户与服务器之间session断开时触发该方法  
+    public void sessionDestroyed(HttpSessionEvent se) {  
+        HttpSession session = se.getSession();  
+        ServletContext application = session.getServletContext();  
+        String sessionId = session.getId();  
+        Map<String, String> online = (Map<String, String>) application.getAttribute("online");  
+        if (online != null) {  
+            // 删除该用户的在线信息  
+            online.remove(sessionId);  
+        }  
+        application.setAttribute("online", online);  
+    }  
+}  
+```
+application范围内的Map就记录了当前应用的所有在线用户  
+
+显示在线用户的界面：
+```
+<%@ page contentType="text/html; charset=GBK" language="java" errorPage="" %>
+<%@ page import="java.util.*" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title> 用户在线信息 </title>
+	<meta name="website" content="http://www.crazyit.org" />
+</head>
+<body>
+在线用户：
+<table width="400" border="1">
+<%
+Map<String , String> online = (Map<String , String>)application
+	.getAttribute("online");
+for (String sessionId : online.keySet())
+{%>
+<tr>
+	<td><%=sessionId%>
+	<td><%=online.get(sessionId)%>
+</tr>
+<%}%>
+</body>
+</html>
+```
