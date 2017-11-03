@@ -1951,3 +1951,402 @@ for (String sessionId : online.keySet())
 </body>
 </html>
 ```
+
+# JSP2特性
+JSP2主要增加了如下新特性：
+- 直接配置JSP属性
+- 表达式语言
+- 简化的自定义标签API
+- Tag文件语法
+
+如果需要使用JSP2语法，其web.xml文件必须使用Servlet2.4以上版本的配置文件。Servlet2.4配置文件的根元素写法如下
+```
+<web-app xmlns="http://java.sun.com/xml/ns/j2ee"    
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"    
+          xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee    
+          http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"    
+          version="2.4">   
+</web-app>   
+```
+  
+## 配置JSP属性
+JSP属性定义使用<jsp-property-group/>元素配置，主要包括如下4个方面：
+- 是否允许使用表达式语言：使用<el-ignored/>元素确定，默认值为false，即允许使用表达式语言  
+- 是否允许使用JSP脚本：使用<scripting-invalid/>元素确定，默认值为false，即允许使用JSP脚本  
+- 声明JSP页面的编码：使用<page-encoding/>元素确定，配置该元素后，可以代替每个页面里page指令contentType属性的charset部分  
+- 使用隐士包含：使用<include-prelude/>和<include-coda/>元素确定，可以代替在每个页面里使用include编译指令来包含其他页面
+> 此处隐式包含的作用与JSP提供的静态包含的作用相似
+  
+下面web.xml文件配置了该应用下的系列属性：
+```
+<?xml version="1.0" encoding="GBK"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+	http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+	version="3.1">
+	<!-- 关于JSP的配置信息 -->
+	<jsp-config>
+		<jsp-property-group>
+			<!-- 对哪些文件应用配置 -->
+			<url-pattern>/noscript/*</url-pattern>
+			<!-- 忽略表达式语言 -->
+			<el-ignored>true</el-ignored>
+			<!-- 页面编码的字符集 -->
+			<page-encoding>GBK</page-encoding>
+			<!-- 不允许使用Java脚本 -->
+			<scripting-invalid>true</scripting-invalid>
+			<!-- 隐式导入页面头  -->
+			<include-prelude>/inc/top.jspf</include-prelude>
+			<!-- 隐式导入页面尾 -->
+			<include-coda>/inc/bottom.jspf</include-coda>
+		</jsp-property-group>
+		<jsp-property-group>
+			<!-- 对哪些文件应用配置 -->
+			<url-pattern>*.jsp</url-pattern>
+			<el-ignored>false</el-ignored>
+			<!-- 页面编码字符集 -->
+			<page-encoding>GBK</page-encoding>
+			<!-- 允许使用Java脚本 -->
+			<scripting-invalid>false</scripting-invalid>
+		</jsp-property-group>
+		<jsp-property-group>
+			<!-- 对哪些文件应用配置 -->
+			<url-pattern>/inc/*</url-pattern>
+			<el-ignored>false</el-ignored>
+			<!-- 页面编码字符集 -->
+			<page-encoding>GBK</page-encoding>
+			<!-- 不允许使用Java脚本 -->
+			<scripting-invalid>true</scripting-invalid>
+		</jsp-property-group>
+	</jsp-config>
+
+	<context-param>
+		<param-name>author</param-name>
+		<param-value>yeeku</param-value>
+	</context-param>
+
+</web-app>
+```
+上面的配置文件中配置了三个<jsp-property-group.../>元素，每个元素配置了一组JSP属性，用于指定哪些JSP页面应该满足这样的规则。  
+> 如果在不允许使用JSP脚本的页面中使用JSP脚本，则该页面将出现错误。
+
+  
+## 表达式语言
+表达式语言是一种简化的数据访问方式。使用表达式语言可以方便地访问JSP的隐含对象和JavaBean组件。  
+在JSP规范中，建议尽量使用表达式语言使JSP文件的格式一致，避免使用JSP脚本。  
+> 表达式语言仅仅是一种数据访问语言，可以方便地访问应用程序数据，避免使用JSP脚本
+
+表达式语法：
+```
+${expression}
+```
+  
+### 1.表达式语言支持的算数运算符和逻辑运算符
+表达式语言支持加、减、乘、除、求余等算数运算符，还支持div、mod等运算符，即除法和求余。  
+而且表达式语言把所有数值都当做浮点数处理，例如3/4等于3.0/4.0得到的结果是0.75、3/0等于3.0/0.0，结果为Infinity。  
+  
+    
+逻辑运算可以在数字与数字之间比较，还可以在字符与字符之间比较，字符串的比较是根据其对应Unicode值来比较大小的。  
+表达式语言 | 表达式语言 |含义
+-- | -- | --
+\> | gt | greater than 
+\< | lt | less than
+== | eq | equal
+!= | ne | not equal
+>= | ge | greater equal
+<= | le | less equal
+
+
+### 2.表达式语言的内置对象
+使用表达式语言可以直接获取请求参数值，可以获取页面中JavaBean的指定属性值，获取请求头及获取page、request、session和application范围的属性值等。  
+表达式语言包含如下11个内置对象：
+- pageContext：代表该页面的pageContext对象，与JSP的pageContext内置对象相同  
+- pageScope：用于获取page范围的属性值  
+- requestScope：用于获取request范围的属性值  
+- sessionScope：用于获取session范围的属性值
+- applicationScope：用于获取application范围的属性值  
+- param：用于获取请求的参数值  
+- paramValues：用于获取请求的参数值，与param的区别在于，该对象用于获取属性值为数组的属性值  
+- header：用于获取请求头的属性  
+- headerValues：用于获取请求头的属性，与header的区别在于，该对象用于获取属性值为数组的属性值  
+- initParam：用于获取请求Web应用的初始化参数  
+- cookie：用于获取指定的Cookie值  
+
+```
+<%--
+网站: <a href="http://www.crazyit.org">疯狂Java联盟</a>
+author  yeeku.H.lee kongyeeku@163.com
+version  1.0
+Copyright (C), 2001-2016, yeeku.H.Lee
+This program is protected by copyright laws.
+Program Name:
+Date: 
+--%>
+
+<%@ page contentType="text/html; charset=GBK" language="java" errorPage="" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title> 表达式语言 - 内置对象 </title>
+	<meta name="website" content="http://www.crazyit.org" />
+</head>
+<body>
+	<h2>表达式语言 - 内置对象</h2>
+	请输入你的名字：
+	<!-- 通过表单提交请求参数 -->
+	<form action="implicit-objects.jsp" method="post">
+		<!-- 通过${param['name']} 获取请求参数 -->
+		你的名字 = <input type="text" name="name" value="${param['name']}"/>
+		<input type="submit" value='提交'/>
+	</form><br/>
+	<% session.setAttribute("user" , "abc");
+	// 下面三行代码添加Cookie
+	Cookie c = new Cookie("name" , "yeeku");
+	c.setMaxAge(24 * 3600);
+	response.addCookie(c);
+	%>
+	<table border="1" width="660" bgcolor="#aaaadd">
+		<tr>
+			<td width="170"><b>功能</b></td>
+			<td width="200"><b>表达式语言</b></td>
+			<td width="300"><b>计算结果</b></td>
+		<tr>
+			<!-- 使用两种方式获取请求参数值 -->
+			<td>取得请求参数值</td>
+			<td>\${param.name}</td>
+			<td>${param.name}&nbsp;</td>
+		</tr>
+		<tr>
+			<td>取得请求参数值</td>
+			<td>\${param["name"]}</td>
+			<td>${param["name"]}&nbsp;</td>
+		</tr>
+		<tr>
+			<!-- 使用两种方式获取指定请求头信息 -->
+			<td>取得请求头的值</td>
+			<td>\${header.host}</td>
+			<td>${header.host}</td>
+		</tr>
+		<tr>
+			<td>取得请求头的值</td>
+			<td>\${header["accept"]}</td>
+			<td>${header["accept"]}</td>
+		</tr>
+		<!-- 获取Web应用的初始化参数值 -->
+		<tr>
+			<td>取得初始化参数值</td>
+			<td>\${initParam["author"]}</td>
+			<td>${initParam["author"]}</td>
+		</tr>
+		<!-- 获取session返回的属性值 -->
+		<tr>
+			<td>取得session的属性值</td>
+			<td>\${sessionScope["user"]}</td>
+			<td>${sessionScope["user"]}</td>
+		</tr>
+		<!-- 获取指定Cookie的值 -->
+		<tr>
+			<td>取得指定Cookie的值</td>
+			<td>\${cookie["name"].value}</td>
+			<td>${cookie["name"].value}</td>
+		</tr>
+	</table>
+</body>
+</html>
+```
+两种方式获取请求参数值：
+```
+${param.name}
+```
+```
+${param["name"]}
+```
+  
+### 3.表达式语言的自定义函数
+自定义函数的开发步骤非常类似于标签的开发步骤，定义方式也几乎一样。区别在于自定义标签直接在页面上生成输出，而自定义函数则需要在表达式语言中使用。  
+> **函数功能大大扩充了EL的功能，EL本身只是一种数据访问语言，因此它不支持调用方法。如果需要在EL中进行更复杂的处理，就可以通过函数来完成。
+函数的本质是：提供一种语法允许在EL中调用某个类的静态方法。**
+
+自定义函数的开发步骤：
+1. 开发函数处理类：函数处理类就是普通类，这个普通类中包含若干个静态方法，每个静态方法都可定义一个函数。
+```
+public class Functions
+{
+	// 对字符串进行反转
+	public static String reverse( String text )
+	{
+		return new StringBuffer( text ).reverse().toString();
+	}
+	// 统计字符串的个数
+	public static int countChar( String text )
+	{
+		return text.length();
+	}
+}
+
+```
+> 可以直接使用JDK或其他项目提供的类，只要这个类包含静态方法即可
+
+2. 使用标签库定义函数：定义函数的方法与定义标签的方法大致相似。在<tagli.../>元素下增加<tag.../>元素用于定义自定义标签；增加<function.../>元素则用于定义自定义函数。每个<function.../>元素只要有三个子元素即可：
+- name：指定自定义函数的函数名
+- function-class：指定自定义函数的处理类
+- function-signature：指定自定义函数对应的方法
+
+下面的标签库定义（TLD）文件将上面的Functions.java类中所包含的两个方法定义成两个函数
+```
+<?xml version="1.0" encoding="GBK"?>
+<taglib xmlns="http://java.sun.com/xml/ns/j2ee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee 
+	web-jsptaglibrary_2_0.xsd" version="2.0">
+	<tlib-version>1.0</tlib-version>
+	<short-name>crazyit</short-name>
+	<!-- 定义该标签库的URI -->
+	<uri>http://www.crazyit.org/tags</uri>
+	<!-- 定义第一个函数 -->
+	<function>
+		<!-- 定义函数名:reverse -->
+		<name>reverse</name>
+		<!-- 定义函数的处理类 -->
+		<function-class>lee.Functions</function-class>
+		<!-- 定义函数的实现方法-->
+		<function-signature>
+			java.lang.String reverse(java.lang.String)</function-signature>
+	</function>
+	<!-- 定义第二个函数: countChar -->
+	<function>
+		<!-- 定义函数名:countChar -->
+		<name>countChar</name>
+		<!-- 定义函数的处理类 -->
+		<function-class>lee.Functions</function-class>
+		<!-- 定义函数的实现方法-->
+		<function-signature>int countChar(java.lang.String)
+			</function-signature>
+	</function>
+</taglib>
+```
+3. 在JSP页面的EL中使用函数：一样需要先导入标签库，然后再使用函数。
+```
+<%@ page contentType="text/html; charset=GBK" language="java" errorPage="" %>
+<%@ taglib prefix="crazyit" uri="http://www.crazyit.org/tags"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title> new document </title>
+	<meta name="website" content="http://www.crazyit.org" />
+</head>
+<body>
+	<h2>表达式语言 - 自定义函数</h2><hr/>
+	请输入一个字符串：
+	<form action="useFunctions.jsp" method="post">
+		字符串 = <input type="text" name="name" value="${param['name']}">
+		<input type="submit"  value="提交">
+	</form>
+	<table border="1" bgcolor="aaaadd">
+		<tr>
+		<td><b>表达式语言</b></td>
+		<td><b>计算结果</b></td>
+		<tr>
+		<tr>
+			<td>\${param["name"]}</td>
+			<td>${param["name"]}&nbsp;</td>
+		</tr>
+		<!--  使用reverse函数-->
+		<tr>
+			<td>\${crazyit:reverse(param["name"])}</td>
+			<td>${crazyit:reverse(param["name"])}&nbsp;</td>
+		</tr>
+		<tr>
+			<td>\${crazyit:reverse(crazyit:reverse(param["name"]))}</td>
+			<td>${crazyit:reverse(crazyit:reverse(param["name"]))}&nbsp;</td>
+		</tr>
+		<!-- 使用countChar函数 -->
+		<tr>
+			<td>\${crazyit:countChar(param["name"])}</td>
+			<td>${crazyit:countChar(param["name"])}&nbsp;</td>
+		</tr>
+	</table>
+</body>
+</html>
+```
+
+> 通过上面可以发现，自定义函数的实质：就是将指定Java类的静态方法暴露或可以在EL中使用的函数，所以可以定义成函数的方法必须用public static修饰
+
+## TagFile支持
+TagFile是自定义标签的简化用法，使用TagFile可以无须定义标签处理类和标签库文件，但仍然可以在JSP页面中使用自定义标签。  
+下面以TagFile建立一个迭代器标签，步骤如下：
+1. 建立Tag文件，在JSP所支持的Tag File规范下，Tag File处理了标签处理类，它的格式类似于JSP文件。可以这样理解：**如同JSP可以代替Servlet作为表现层一样，Tag File则可以代替标签处理类。**
+Tag File具有如下5个编译指令：
+- taglib：作用与JSP文件中的taglib指令效果相同，用于导入其他标签库  
+- include：作用与JSP文件中的include指令效果相同，用于导入其他JSP或静态页面  
+- tag：作用类似于JSP文件中的page指令，有pageEncoding、body-content等属性，用于设置页面编码等属性  
+- attribute：用于设置自定义标签的属性，类似于自定义标签处理类中的标签属性  
+- variable：用于设置自定义标签的变量，这些变量将传给JSP页面使用  
+
+```
+<%@ tag pageEncoding="GBK" import="java.util.List"%>
+<!-- 定义了四个标签属性 -->
+<%@ attribute name="bgColor" %>
+<%@ attribute name="cellColor" %>
+<%@ attribute name="title" %>
+<%@ attribute name="bean" %>
+<table border="1" bgcolor="${bgColor}">
+<tr>
+	<td><b>${title}</b></td>
+</tr>
+<%List<String> list = (List<String>)
+	request.getAttribute("a");
+// 遍历输出list集合的元素
+for (Object ele : list){%>
+	<tr>
+		<td bgcolor="${cellColor}">
+		<%=ele%>
+		</td>
+	</tr>
+<%}%>
+</table>
+```
+Tag File的命名必须遵守如下规则：tagName.tag。后缀名必须是tag。将该文件保存在Web应用下的某个路径下，这个路径相当于标签库的URI名。
+2. 在页面中使用自定义标签时，需要先导入标签库，再使用标签。不过与导入标签存在一些差异。由于此时的标签库没有URI，只有标签库路径，因此导入标签时，使用如下语法：
+```
+<%@ taglib prefix="tagPrefix" tagdir="path" %>
+```
+下面是JSP页面
+```
+<%@ page contentType="text/html; charset=GBK" language="java" errorPage="" %>
+<%@ page import="java.util.*" %>
+<%@ taglib prefix="tags" tagdir="/WEB-INF/tags" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>迭代器tag file</title>
+	<meta name="website" content="http://www.crazyit.org" />
+</head>
+<body>
+	<h2>迭代器tag file</h2>
+	<%
+	// 创建集合对象，用于测试Tag File所定义的标签
+	List<String> a = new ArrayList<String>();
+	a.add("疯狂Java讲义");
+	a.add("轻量级Java EE企业应用实战");
+	a.add("疯狂Ajax讲义");
+	// 将集合对象放入页面范围
+	request.setAttribute("a" , a);
+	%>
+	<h3>使用自定义标签</h3>
+	<tags:iterator bgColor="#99dd99" cellColor="#9999cc"
+		title="迭代器标签" bean="a" />
+</body>
+</html>
+```
+使用如下代码来使用标签：
+```
+<tags:iterator .../>
+```
+Tag File是自定义标签的简化。事实上，就如同JSP文件会编译成Servlet一样，Tag File也会编译成标签处理类，自定义标签的后台依然由标签处理类完成，而这个过程由容器完成。 
+
+# Servlet3.0新特性
