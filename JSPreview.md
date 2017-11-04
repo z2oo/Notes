@@ -2350,3 +2350,296 @@ Tag File的命名必须遵守如下规则：tagName.tag。后缀名必须是tag�
 Tag File是自定义标签的简化。事实上，就如同JSP文件会编译成Servlet一样，Tag File也会编译成标签处理类，自定义标签的后台依然由标签处理类完成，而这个过程由容器完成。 
 
 # Servlet3.0新特性
+## Servlet3.0的注解
+抛弃了采用web.xml配置Servlet、Filter、Listener的繁琐步骤，允许开发人员使用注解修饰它们，从而进行部署。  
+Servlet3.0规范在javax.servlet.annotation包下提供了如下注解：
+- **@WebServlet**：用于修饰一个Servlet类，用于部署Servlet类  
+- **@WebInitParam**：用于与@WebServlet或@WebFilter一起使用，为Servlet、Filter配置参数  
+- **@WebListener**：用于修饰Listener类，用于部署Listener类  
+- **@WebFilter**：用于修饰Filter类，用于部署Filter类  
+- **@MultipartConfig**：用于修饰Servlet，指定该Servlet将会负责处理multipart/form-data类型的请求（主要用于文件上传）。  
+- **@ServletSecurity**：这是一个与JAAS有关的注解，修饰Servlet指定该Servlet的安全与授权控制  
+- **@HttpConstraint**：用于与@ServletSecurity一起使用，用于指定该Servlet的安全与授权控制  
+- **@HttpMethodConstraint**：用于与@ServletSecurity一起使用，用于指定该Servlet的安全与授权  
+
+## Servlet3.0的Web模块支持
+Servlet 3.0为模块化开发提供了良好的支持，Servlet 3.0规范不再要求所有Web组件（如Servlet、Listener、Filter）都部署在web.xml文件中，而是允许采用“Web模块”来部署、管理它们。  
+一个Web模块通常对应于一个JAR包，这个JAR包有如下文件结构：  
+<webModule>.jar——这是Web模块的JAR包，可以改变  
+|——META-INF  
+|　　　　|  
+|　　　　|——web-fragment.xml  
+|——Web模块所用的类文件、资源文件等   
+
+　　
+从上面的文件结构可以看出，Web模块与普通JAR的最大区别在于需要在META-INF目录下添加一个Web-fragment.xml文件，这个文件也被称为Web模块部署描述符。  
+
+web-fragment.xml文件与web.xml文件的作用、文件结构都基本相似，因为它们都用于部署、管理各种Web组件。只是web-fragment.xml用于部署、管理Web模块而已，但web-fragment.xml可以指定多个下面的两个元素：
+- <name.../>：用于指定该模块的名称
+- <ordering.../>：用于指定加载该Web模块的相对顺序
+下面开发第一个Web模块，该Web模块内只定义一个简单的ServletContextListener，该模块对应的web-fragment.xml文件如下：
+```
+<?xml version="1.0" encoding="GBK"?>
+<web-fragment xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee  
+	http://xmlns.jcp.org/xml/ns/javaee/web-fragment_3_1.xsd" version="3.1">
+	<!-- 指定该Web模块的唯一标识 -->
+	<name>crazyit</name>
+	<listener>
+		<listener-class>lee.CrazyitListener</listener-class>
+	</listener>
+	<ordering>
+		<!-- 用配置该Web模块必须位于哪些模块之前加载 -->
+		<before>
+			<!-- 用于指定位于其他所有模块之前加载 -->
+			<others/>
+		</before>
+	</ordering>
+</web-fragment>
+```
+上面的Web模块部署描述文件的根元素是web-fragment，粗体字代码指定该Web模块的名称是crazyiit，接下来的粗体字代码指定该Web模块将在其他所有Web模块之前加载  
+接下来，再开发一个Web模块，接下来的Web模块同样只定义了一个ServletContextListener，该Web模块对应的web-fragment.xml文件如下：
+```
+<?xml version="1.0" encoding="GBK"?>
+<web-fragment xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee  
+	http://xmlns.jcp.org/xml/ns/javaee/web-fragment_3_1.xsd" version="3.1">
+	<!-- 指定该Web模块的唯一标识 -->
+	<name>leegang</name>
+	<!-- 配置Listener -->
+	<listener>
+		<listener-class>lee.LeegangListener</listener-class>
+	</listener>
+	<ordering>
+		<!-- 用配置该Web模块必须位于哪些模块之后加载 -->
+		<after>
+			<!-- 此处可用多个name元素列出该模块必须位于这些模块之后加载 -->
+			<name>crazyit</name>
+		</after>
+	</ordering>
+</web-fragment>
+```
+将这两个Web模块打包成JAR包  
+将这两个Web模块对应的JAR包赋值到任意Web应用的WEB-INF/lib目录下，启动Web应用，将可以看到两个Web模块被加载：先加载crazyit模块，再加载leegang模块  
+Web应用除了可按web-fragment.xml文件中指定的加载顺序来加载Web模块之外，还可以通过web.xml文件指定个Web模块加载的绝对顺序。在web.xml文件中指定的加载顺序将会覆盖Web模块中web-fragment.xml文件所指定的加载顺序。  
+假如在Web应用的web.xml文件中增加如下配置片段：
+```
+<absolute-ordering>  
+    <!-- 指定Web模块按如下顺序加载 -->  
+    <name>moudle-name</name>  
+    <name>moudle-name</name>  
+</absolute-ordering>  
+```
+上面的配置片段指定了先加载leegang模块，后加载crazyit模块，如果重新启动该Web应用，可看到了leegang模块被优先加载  
+Servlet 3.0的Web模块支持为模块化开发、框架使用提供了巨大的方便，例如需要在Web应用中使用Web框架，这就只要将该框架的JAR包复制到Web应用中即可。因为这个JAR包的META-INF目录下可以通过web-fragment.xml文件来配置该框架所需要的Servlet、Listener、Filter等，从而避免修改Web应用的web.xml文件。Web模块支持对于模块化开发也有很大的帮助，开发者可以将不同模块的Web组件部署在不同的web-fragment.xml文件中，从而避免所有模块的配置、部署信息都写在web.xml文件中，这对以后的升级、维护将更加方便。  
+  
+## Servlet3.0提供的异步处理
+在之前的Servlet规范中，如果Servlet作为控制器调用一个耗时的业务方法，nameServlet必须等到业务方法完全返回之后才会生成响应，这将使得Servlet对业务方法的调用变成一种阻塞式的调用，因此效率比较低。  
+Servlet 3.0规范引入了异步处理来解决这个问题，异步处理允许Servlet重新发起一条新线程去调用耗时的业务方法，这样就可避免等待。  
+Servlet 3.0的异步处理是通过AsyncContext类来处理的，Servlet可通过ServletRequest的如下连个方法开启异步调用、创建AsyncContext对象：
+- AsyncContext startAsync()
+- AsyncContext startAsync(ServletRequest,ServletResponse)
+重复调用上面的方法将得到同一个AsyncContext对象，AsyncContext对象代表异步处理的上下文，它提供了一些工具方法，可完成设置异步调用的超时时长，dispatch用于请求、启动后台线程、获取request、response对象等功能。  
+示例：  
+创建异步处理的Servlet类：
+```
+@WebServlet(urlPatterns = "/async", asyncSupported = true)  
+public class AsyncServlet extends HttpServlet {  
+    private static final long serialVersionUID = 1L;  
+  
+    @Override  
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {  
+        response.setContentType("text/html;charset=GBK");  
+        PrintWriter out = response.getWriter();  
+        out.println("<title>异步调用示例</title>");  
+        out.println("进入Servlet的时间：" + new java.util.Date() + ".<br/>");  
+        // 创建AsyncContext，开始异步调用  
+        AsyncContext actx = request.startAsync();  
+        // 设置异步调用的超时时长  
+        actx.setTimeout(60 * 1000);  
+        // 启动异步调用的线程，该线程以异步方式执行  
+        actx.start(new GetBooksTarget(actx));  
+        out.println("结束Servlet的时间：" + new java.util.Date() + ".<br/>");  
+        out.flush();  
+    }  
+}  
+```
+上面的Servlet类中创建了AsyncContext对象，并通过该对象以异步方式启动了一条后台线程。该线程执行体模拟调用耗时的业务方法，下面是线程执行体的代码：
+```
+public class GetBooksTarget implements Runnable {  
+    private AsyncContext actx = null;  
+    public GetBooksTarget(AsyncContext actx) {  
+        this.actx = actx;  
+    }  
+    public void run() {  
+        try {  
+            // 等待5秒钟，以模拟业务方法的执行  
+            Thread.sleep(5 * 1000);  
+            ServletRequest request = actx.getRequest();  
+            List<String> books = new ArrayList<String>();  
+            books.add("疯狂Java讲义");  
+            books.add("轻量级Java EE企业应用实战");  
+            books.add("疯狂Ajax讲义");  
+            request.setAttribute("books", books);  
+            actx.dispatch("/async.jsp");  
+        } catch (Exception e) {  
+            e.printStackTrace();  
+        }  
+    }  
+}  
+```
+该线程体让线程暂停5秒来模拟调用耗时的业务方法，最后调用AsyncContext的dispatch方法把请求dispatch到指定JSP页面。  
+被异步请求dispatch的目标页面需要指定session=“false”，表明该页面不会重新创建session。下面是async.jsp页面代码： 
+```
+<%@ page contentType="text/html; charset=GBK" language="java"  
+    session="false"  isELIgnored="false"%>  
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>  
+<ul>  
+    <c:forEach items="${books}" var="book">  
+        <li>${book}</li>  
+    </c:forEach>  
+</ul>  
+<%  
+    out.println("业务调用结束的时间：" + new java.util.Date());  
+    if (request.isAsyncStarted()) {  
+        // 完成异步调用  
+        request.getAsyncContext().complete();  
+    }  
+%>  
+```
+上面使用注解的方式已经配置好，如果要使用web.xml配置，则需要如下配置： 
+```
+<servlet>   
+    <servlet-name>async</servlet-name>   
+    <servlet-class>lee.AsyncServlet</servlet-class>   
+    <async-supported>true</async-supported>   
+</servlet>   
+<servlet-mapping>   
+    <servlet-name>async</servlet-name>   
+    <url-pattern>/async</url-pattern>   
+</servlet-mapping>  
+```
+对于支持异步调用的Servlet来说，当Servlet以异步方式启用新线程之后，该Servlet的执行不会被阻塞，该Servlet将可以向客户端浏览器生成响应——当新线程执行完成后，新线程生成的响应再次被送往客户端浏览器。  
+  
+当Servlet启用异步调用的线程之后，该线程的执行过程对开发者是透明的。但在有些情况下，开发者需要了解该异步线程的执行细节，并针对特定的执行结果进行针对性处理，这可借助于Servlet3.0提供的异步监听器来实现。  
+异步监听器需要实现AsyncListener接口，实现该接口的监听器类需要实现如下4个方法：
+- **onStartAsync(AsyncEvent event)**：当异步调用开始时触发该方法  
+- **onComplete(AsyncEvent event)**：当异步调用完成时触发该方法  
+- **onError(AsyncEvent event)**：当异步调用错误时触发该方法  
+- **onTimeout(AsyncEvent event)**：当异步调用超时时触发该方法
+
+接下来为上面的异步调用定义如下监听类：
+```
+public class MyAsyncListener
+	implements AsyncListener
+{
+	public void onComplete(AsyncEvent event)
+		throws IOException
+	{
+		System.out.println("------异步调用完成------" + new Date());
+	}
+	public void onError(AsyncEvent event)
+		throws IOException
+	{}
+	public void onStartAsync(AsyncEvent event)
+		throws IOException
+	{
+		System.out.println("------异步调用开始------" + new Date());
+	}
+	public void onTimeout(AsyncEvent event)
+		throws IOException
+	{}
+}
+```
+上面实现的异步监听器类只实现了onStartAsync、onComplete两个方法，表明该监听器只能监听异步调用开始、异步调用完成两个事件。  
+提供了异步监听器之后，还需要通过AsyncContext来注册监听器，调用该对象的addListener()方法即可。  
+例如上面的Servlet中增加如下代码即可注册：
+```
+AsyncContext actx=request.startAsycn();
+//为该异步调用注册监听器
+actx.addListener(new MyAsyncListener());
+```
+虽然上面的例子都是基于Servlet的，但由于Filter与Servlet具有很大的相似性，因此Servlet3.0规范完全支持在Filter中使用异步调用。在Filter中进行异步调用与在Servlet中进行异步调用的效果完全相似。  
+  
+## 改进的Servlet API
+重大的改进包括：
+- HttpServletRequest增加了对文件上传的支持
+- ServletContext允许通过编程的方式动态注册Servlet、Filter
+HttpServletRequest提供了如下两个方法来处理文件上传：
+- Part getPart(String name)：根据名称来获取文件上传域
+- Collection<Part> getParts()：获取所有的文件上传域
+上面两个方法的返回值都涉及一个API：Part，每个Part对象对应于一个文件上传域，该对象提供了大量方法来访问上传文件的文件类型、大小、输入流等，并提供了一个write(String file)方法将上传文件写入服务器磁盘。  
+  
+
+为了向服务器上传文件，需要在表单里使用<input type="file" ../>文件域，这个文件域会在HTML页面上产生一个单行文本框和一个“浏览”按钮，浏览者可通过该按钮选择需要上传的文件。除此之外，上传文件一定要为表单域设置enctype属性。  
+  
+
+表单的enctype属性指定的是表单数据的编码方式，该属性有如下三个值：
+- **application/x-www-form-urlencoded**：这是默认的编码，它只处理表单域里的value属性值，采用这种编码方式的表单会将表单域的值处理成URL编码方式  
+- **multipart/form-data**：这种编码方式会以二进制流的方式来处理表单数据，这种编码方式会把文件域指定文件的内容封装到请求参数里  
+- **text/plain**：这种编码方式当表单的action属性为mailto:URL的形式时比较方便，这种方式主要适用于直接通过表单发送邮件的形式
+
+如果将enctype设置为application/x-www-form-urlencoded，或不设置enctype属性，提交表单时只会发送文件域的文本框里的字符串，也就是浏览者所选择文件的绝对路径，对服务器获取该文件在客户端上的绝对路径没有任何作用，因为服务器不可能访问客户机的文件系统。  
+  
+示例如下：
+下面定义了一个文件上传的页面：
+```
+<form method="post" action="upload"  enctype="multipart/form-data">  
+    文件名：<input type="text" id="name" name="name" /><br/>  
+    选择文件：<input type="file" id="file" name="file" /><br/>  
+    <input type="submit" value="上传" /><br/>  
+</form>  
+```
+上面的页面中的表单需要设置enctype=“multipart/form-data”，这表明该表单可用于上传文件。上面表单中定义了两个表单域：一个普通的文本框，它将生成普通请求参数；一个文件上传域，它用于上传文件。    
+对于传统的文件上传需要借助于common-fileupload等工具，处理起来极为复杂，借助于Servlet 3.0的API，处理文件上传将变得十分简单。如下面的Servlet代码：
+```
+@WebServlet(name = "upload", urlPatterns = { "/upload" })  
+@MultipartConfig  
+public class UploadServlet extends HttpServlet {  
+    private static final long serialVersionUID = 1L;  
+    public void service(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {  
+        response.setContentType("text/html;charset=GBK");  
+        PrintWriter out = response.getWriter();  
+        request.setCharacterEncoding("GBK");  
+        // 获取普通请求参数  
+        String name = request.getParameter("name");  
+        out.println("普通的name参数为：" + name + "<br/>");  
+        // 获取文件上传域  
+        Part part = request.getPart("file");  
+        // 获取上传文件的文件类型  
+        out.println("上传文件的的类型为：" + part.getContentType() + "<br/>");  
+        // 获取上传文件的大小。  
+        out.println("上传文件的的大小为：" + part.getSize() + "<br/>");  
+        // 获取该文件上传域的Header Name  
+        Collection<String> headerNames = part.getHeaderNames();  
+        // 遍历文件上传域的Header Name、Value  
+        for (String headerName : headerNames) {  
+            out.println(headerName + "--->" + part.getHeader(headerName) + "<br/>");  
+        }  
+        // 获取包含原始文件名的字符串  
+        String fileNameInfo = part.getHeader("content-disposition");  
+        // 提取上传文件的原始文件名  
+        String fileName = fileNameInfo.substring(fileNameInfo.indexOf("filename=\"") + 10, fileNameInfo.length() - 1);  
+        // 将上传的文件写入服务器  
+        part.write(getServletContext().getRealPath("/uploadFiles") + "/" + fileName); // ①  
+    }  
+}  
+```
+上面Servlet使用了@MultipartConfig修饰，处理文件上传的Servlet应该使用该注解修饰。  
+接下来该Servlet中HttpServletRequest就可通过getPart(String name)方法来获取文件上传域——就像获取普通请求参数一样。   
+上面的Servlet中将会把上传的文件保存到Web应用的根路径下的uploadFiles目录下，因此我们还需要在该Web应用的根目录下创建uploadFiles目录。  
+上面Servlet上传时保存的文件名直接使用了上传文件的原始文件名，在实际项目中一般不会这么做，因为可能多个用户可能上传同名的文件，这样将导致后面用户上传的文件覆盖前面用户上传的文件。在实际项目中可借助于java.util.UUID工具类生成文件名。
+
+> 提示：  
+与Servlet3.0所有注解相似的是，Servlet3.0为@MultipartConfig提供了相似的配置元素，同样可以通过在<servlet.../>元素中添加<multipart-config.../>子元素来达到相同的效果  
+
+ServletContext则提供了如下方法来动态地注册Servlet、Filter，并允许动态设置Web应用的初始化参数：
+- 多个重载的addServlet()方法：动态地注册Servlet
+- 多个重载的addFilter()方法：动态地注册Filter
+- 多个重载的addListener()：动态地注册Listener
+- setInitParameter(String name,String value)方法：为Web应用设置初始化参数
+
+
+# Servlet 3.1 新增的非阻塞式IO
