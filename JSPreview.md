@@ -2642,4 +2642,106 @@ ServletContext则提供了如下方法来动态地注册Servlet、Filter，并�
 - setInitParameter(String name,String value)方法：为Web应用设置初始化参数
 
 
-# Servlet 3.1 新增的非阻塞式IO
+# Servlet 3.1新增的非阻塞式IO
+Servlet3.1新特性包括强制更改session Id（由HttpServletRequest的changeSessionId()方法提供）、非阻塞IO等。尤其是Servlet3.1提供的非阻塞IO进行输入、输出，可以更好地提升性能。  
+Servlet底层的IO是通过如下两个IO流来支持的：
+- ServletInputStream：Servlet用于读取数据的输入流
+- ServletOutputStream：Servlet用于输出数据的输出流
+  
+以Servlet读取数据为例，传统读取方式采用阻塞式IO——当Servlet读取浏览器提交的数据时，如果数据暂时不可用，或数据没有读取完成，Servlet当前所在线程将会被阻塞，无法继续向下执行。  
+从Servlet 3.1 开始，ServletInputStream新增了一个setReadListener(ReadListener readListener)方法，该方法允许以非阻塞IO读取数据，实现ReadListener监听器需要实现如下三个方法：
+- onAllDataRead()：当所有数据读取完成时激发该方法
+- onDataAvailable()：当有数据可用时激发该方法
+- onError(Throwable t)：读取数据出现错误时激发该方法
+
+> 提示：  
+类似地ServletOutputStream也提供了SetWriterListener()方法。通过这种方式，可以让ServletOutputStream以非阻塞IO进行输出
+
+在Servlet中使用费阻塞IO非常简单，主要按如下步骤进行即可：
+1. 调用ServletRequest的startAsync()方法开启异步模式
+2. 通过ServletRequest获取ServletInputStream，并为ServletInputStream设置监听器（ReadListener实现类）
+3. 实现ReadListener接口来实现监听器，在该监听器的方法中以非阻塞方式读取数据
+  
+下面是采用非阻塞IO进行读取的Servlet，示例如下：
+```
+@WebServlet(urlPatterns = "/async", asyncSupported = true)  
+public class AsyncServlet extends HttpServlet {  
+    private static final long serialVersionUID = 1L;  
+    public void service(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {  
+        response.setContentType("text/html;charset=GBK");  
+        PrintWriter out = response.getWriter();  
+        out.println("<title>非阻塞IO示例</title>");  
+        out.println("进入Servlet的时间：" + new java.util.Date() + ".<br/>");  
+        // 创建AsyncContext，开始异步调用  
+        AsyncContext context = request.startAsync();  
+        // 设置异步调用的超时时长  
+        context.setTimeout(60 * 1000);  
+        ServletInputStream input = request.getInputStream();  
+        // 为输入流注册监听器  
+        input.setReadListener(new MyReadListener(input, context));  
+        out.println("结束Servlet的时间：" + new java.util.Date() + ".<br/>");  
+        out.flush();  
+    }  
+}  
+```
+上面程序调用request的startAsyc()方法开启异步调用之后，程序中input.setReadListener()为Servlet输入流注册了一个监听器，这样就无须在该Servlet中使用阻塞IO来获取数据了。而是改用由MyReadListener负责读取数据，这样Servlet就可以继续向下执行，不会因为IO阻塞线程。  
+MyReadListener需要实现ReadListener接口，并重写它的三个方法。
+```
+public class MyReadListener implements ReadListener {  
+    private ServletInputStream input;  
+    private AsyncContext context;  
+  
+    public MyReadListener(ServletInputStream input, AsyncContext context) {  
+        this.input = input;  
+        this.context = context;  
+    }  
+  
+    @Override  
+    public void onDataAvailable() {  
+        System.out.println("数据可用！！");  
+        try {  
+            // 暂停5秒，模拟读取数据是一个耗时操作。  
+            Thread.sleep(5000);  
+            StringBuilder sb = new StringBuilder();  
+            int len = -1;  
+            byte[] buff = new byte[1024];  
+            // 采用原始IO方式读取浏览器向Servlet提交的数据  
+            while (input.isReady() && (len = input.read(buff)) > 0) {  
+                String data = new String(buff, 0, len);  
+                sb.append(data);  
+            }  
+            System.out.println(sb);  
+            // 将数据设置为request范围的属性  
+            context.getRequest().setAttribute("info", sb.toString());  
+            // 转发到视图页面  
+            context.dispatch("/async.jsp");  
+        } catch (Exception ex) {  
+            ex.printStackTrace();  
+        }  
+    }  
+  
+    @Override  
+    public void onAllDataRead() {  
+        System.out.println("数据读取完成");  
+    }  
+  
+    @Override  
+    public void onError(Throwable t) {  
+        t.printStackTrace();  
+    }  
+}  
+```
+上面程序中MyReadListener的onDataAvailable()方法先暂停线程5秒，用于模拟耗时操作，接下来程序使用普通IO流读取浏览器提交的数据。  
+  
+如果程序直接让Servlet读取浏览器提交的数据，那么该Servlet就需要阻塞5秒，不能继续向下执行；改为使用非阻塞IO进行读取，虽然读取数据的IO操作需要5秒，但是它不会阻塞Servlet执行，因此可以提升Servlet的性能。  
+  
+# Tomcat8的WebSocket支持
+使用Tomcat8开发WebSocket服务端非常简单，大致有如下两种方式：
+- 使用注解方式开发，被@ServerEndpoint修饰的java类即可作为WebSocket服务端  
+- 继承Endpoint基类实现WebSocket服务端
+
+开发被@ServerEndpoint修饰的Java类之后，该类中还可以定义如下方法。
+- 被@OnOpen修饰的方法：当客户端与该WebSocket服务端建立连接时激发该方法  
+- 被@OnClose修饰的方法：当客户端与该WebSocket服务端断开连接时激发该方法  
+- 被@OnMessage修饰的方法：当WebSocket服务端收到客户端消息时激发该方法  
+- 被@OnError修饰的方法：当客户端与该WebSocket服务端连接出现错误时激发该方法
