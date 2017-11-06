@@ -23,7 +23,7 @@ jdbc:subprotocol:other stuff
 上面写法中的jdbc是固定的，而subprotocol指定连接到特定数据库的驱动，而后面的other和stuff也是不固定的  
 MySql数据库的URL为：
 ```
-jdbc:mysql://hostname:port/databasename
+jdbc:mysql://hostname:3306/databasename
 ```
 Oracle数据库的URL为：
 ```
