@@ -35,7 +35,23 @@ String sex=new String(request.getParameter("sex").getBytes("ISO8859_1"),"UTF-8")
 ```
 <a href="test02.jsp?name=<%=URLEncoder.encode('李民')%>">测试</a>
 ```
+在使用include动作指令(即<JSP:include page="XXX.jsp"/>)来include其他html页面或JSP页面时，通常如果被include的页面中含有中文，则会出现乱码  
+可以将被include的文件改为JSP页面，然后再在这个JSP页面头一行加上
+```
+<%@page contentType="text/html;utf-8" pageEncoding="utf-8"%>
+```
+就可以解决乱码，然而如果是HTML页面的话则不行，可以换一种include方式，即静态导入
+```
+<%@include file="XXX.html"%>
+```
+然后再在html页面的头部加上
+```
+<%@page  pageEncoding="utf-8"%>
+ ```
+尽管尽管html不能识别该指令，但通过include指令引入时该指令就能起作用了  
   
+
+ 
 ## 关于JSP页面中超链接的访问路径
 如果JSP页面中有一个超链接，其完整的访问路径为：http://localhost:8080/project01/task1-2.jsp。  
 其中，http://localhost:8080/是服务器的基本路径，project01是当前应用程序项目名称，根路径是http://localhost:8080/project01/  
