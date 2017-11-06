@@ -196,3 +196,132 @@ FilterChain接口位于javax.servlet包中，该接口由容器进行实现。Fi
 3)FilterConfig接口
 FilterConfig接口位于java.servlet包中，该接口由容器进行实现，用于获取过滤器初始化期间的参数信息，包含的方法有getFilterName()、getInitParameter()、getInitParameterNames()和getServletContext()  
   
+## JDBC的实现原理
+JDBC主要通过java.sql包提供的API供Java程序开发者使用，驱动程序厂商则通过实现折现接口封装各种对数据库的操作。JDBC为多种关系数据库提供了统一访问接口，它可以向相应数据库发送SQL调用，将Java语言和JDBC结合起来，程序员只需编写一次程序就可以让它在任何平台上运行  
+JDBC可以说是程序开发者和数据库厂商之间的桥梁，Java程序开发者和数据库厂商在统一的JDBC标准之下，负责各自的工作范围。同时，任何一方的改变对另一方都不会造成显著的影响  
+JDBC的作用概括起来包括以下几方面：
+- 建立与数据库的连接
+- 向数据库发出查询请求
+- 处理数据库的返回结果
+  
+  
+## 使用JDBC访问数据库
+1)注册与加载连接数据库的驱动程序  
+使用Class.forName(JDBC驱动程序类)的方式显式加载一个驱动程序类，使用DriverManager类的getConnection()方法建立与数据库的连接  
+驱动程序负责向DriverManager类登记注册，在与数据库相连接时，DriverManager将使用该驱动程序  
+基本格式为Class.forName("JDBC驱动程序类");  
+连接SQL Server的驱动程序的示例代码如下：
+```
+Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+```
+连接Oracle的驱动程序代码：
+```
+Class.forName("oracle.jdbc.driver.OracleDriver");
+```
+2)创建与数据库的连接  
+创建与数据库的连接要用到java.sql.DriverManager类和java.sql.Connection接口  
+3)通过连接对象获取指令对象  
+JDBC提供了3个类用于向数据库发送SQL语句，Connection接口中的3个方法可用于创建这些类的实例，分别是Statement、PreparedStatement和CallableStatement  
+4)使用指令对象执行SQL语句  
+5)获取结果集，且对结果集做相应处理  
+6)释放资源  
+  
+  
+## JDBC的DriverManager类
+DriverManager类是java.sql包中用于管理数据库驱动程序的类，根据数据库的不同，注册、装载相应的JDBC驱动程序，JDBC驱动程序负责直接连接相应的数据库  
+在DriverManager类中存有已注册的驱动程序清单，当调用DriverManager类的方法getConnection时，它将检查清单中的所有驱动程序，一直找到可与URL中指定的数据库进行连接的驱动程序为止。  
+只要加载了合适的驱动程序，DriverManager对象就开始管理连接  
+使用DriverManager类的getConnection()方法建立与数据库的连接，并返回一个Connection对象，此方法的参数包括目的数据库的URL、数据库用户名和密码  
+```
+static Connection getConnection(String url,String username,String password)
+基本格式：Connection conn=DriverManager.getConnection("JDBC URL","数据库用户名","密码");
+```
+  
+## JDBC的Connection接口
+Connection接口负责连接数据库并完成传送数据的任务，与特定数据源建立连接是进行数据库访问操作的前提。一个Connection对象代表与数据库的一个连接。连接过程包括执行的SQL语句和在该连接上所返回的结果。只有在成功建立连接的前提下，SQL语句才可能被传递到数据库，最终被执行并返回结果  
+Connection接口的主要方法如下
+- Statement createStatement()：创建一个Statement对象
+- Statement createStatement(int resultSetType,int resultSetConcurrency)：创建一个Statement对象，它将生成具有特定类型和并发性的结果集  
+- void commit()：提交对数据库的改变并释放当前持有的数据库的锁  
+- void rollback()：回滚当前事务中所有改变并释放当前连接持有的数据库的锁  
+- boolean isClose()：判断连接是否已关闭  
+- boolean isReadOnly()：判断连接是否为只读模式  
+- void clearWarning()：清除连接的所有警告信息  
+- void close()：立即释放连接对象的数据库和JDBC资源  
+  
+  
+## JDBC的Statement接口
+Statement接口由Connection接口产生，用于在已经建立的连接的基础上向数据库发送SQL语句，包括查询、新增、修改和删除等操作  
+Statement对象使用Connection的createStatement方法创建，用来执行静态的SQL语句并返回执行的结果  
+```
+Statement stmt=conn.createStatement();
+```
+如果要建立可滚动的记录集，需要使用如下格式：
+```
+public Statement createStatement(int resultSetType,int resultSetConcurrency
+```
+Statement接口提供了3中执行SQL语句的方法：executeQuery、executeUpdate和execute：
+1. ResultSet executeQuery(String strSql)
+- 这种方法的执行结果将返回单个结果集，主要用于在Statement对象中执行SQL查询语句，并返回查询生成的ResultSet对象  
+2. int executeUpdate(StringstrSql)
+- 这种方法用于执行Insert、Update、Delete和SQL DDL(数据定义语言)语句，返回一个整数值，表示执行SQL语句影响的数据行数
+```
+String strSql="Update 用户表 Set 密码='"+password+"'Where 用户编号='"+code+"'";
+int num=statement.executeUpdate(strSql);
+```
+3. boolean execute(String sql)
+- 这种方法是执行SQL语句调用的一般方法，允许用户执行SQL数据定义命令，然后获取一个布尔值，显示是否返回ResultSet对象。用于执行返回多个结果集、多个更新结果或两者组合的语句
+  
+Statement对象将由Java垃圾收集程序自动关闭。而作为一种良好的编程风格，应该在不需要Statement对象时显式地关闭它们  
+  
+  
+## JDBC的ResultSet接口
+ResultSet接口负责保存Statement执行后返回的查询结果。ResultSet对象实际上是一个由查询结果数据构成的表，在ResultSet中隐含了一个指针，利用这个指针移动数据行，可以取得所要的数据，或者对数据进行简单的操作    
+JDBC的ResultSet对象包含了执行某个SQL语句后返回的所有行，表示返回结果集的数据表，该结果集可由Statement对象、PrepareStatement对象或者CallableStatement对象执行SQL语句后返回。ResultSet对象提供了对这些结果集中的访问，在每个ResultSet对象的内部就好像有一个指针，借助于指针的移动，就可以遍历ResultSet对象内的每个数据项。  
+因为一开始指针所指向的是第一行记录之前，所以必须首先调用next()方法才能取出第1条记录，而第二次调用next()方法时指针就会指向第2条记录  
+在ResultSet接口中，提供了一系列方法在记录集中自由移动记录指针：
+- void first()：将记录指针移动到记录集的第一行  
+- void last():将记录指针移动到记录集的最后一行
+- void previous()：将记录指针从当前位置向前移动一行
+- void next()：将记录指针从当前位置向后移动一行
+- void beforeFirst()：将记录指针移动到记录集的第一行之前
+- void afterLast()：将记录指针移动到记录集的最后一行之后
+- boolean absolute(int row)：将记录指针移动到记录集中给定编号的行
+- boolean isFirst()：如果记录指针位于记录集的第一行，则返回true，否则返回false
+- boolean isLast()：类似上
+- boolean isBeforeFirst()：如果记录指针位于记录集的第一行之前，返回true
+- boolean isAfterLast()：类似上
+- int getRow()：获取当前行的编号
+  
+SQL数据类型与Java数据类型并不完全匹配，需要一种转换机制，通过ResultSet对象提供的getXXX()方法，可以取得数据项内的每个字段的值(XXX代表对应字段的数据类型，如getInt()、getString()、getDouble、getBoolean()、getDate()、getTime()等)，可以使用字段的索引或字段的名称获取值    
+一般情况下，使用字段的索引，字段索引从1开始编号。  
+假设ResultSet对象内包含两个字段，分别为整型和字符串类型，则可以使用rs.getInt(1)与rs.getString(2)方法来取得这两个字段的值(1、2分别代表各字段的相对位置)。当然也可以使用列的字段名来指定列，如rs.getString("name")  
+  
+  
+## JDBC的PreparedStatement接口
+PreparedStatement接口继承自Statement接口，PreparedStatement实例包含已编译的SQL语句，其执行速度要快于Statement对象  
+PreparedStatement对象是使用Connection对象的PreparedStatement()方法创建的
+```
+String strSql="select 用户编号 from 用户表 where 用户编号=?";
+PreparedStatement ps=conn.prepareStatement(strSql);
+ps.setString(1,code);   //code变量中存入了用户编号值
+ResultSet rs=ps.executeQuery();
+```
+PreparedStatement对象中药执行的SQL语句可包含1个或多个输入参数，参数的值在SQL语句创建时未被指定，而为每个参数保留了一个占位符“?”，在执行PreparedStatement对象之前，必须设置每个占位符“?”参数的值，可以通过调用setXXX()方法来完成，其中XXX表示该参数相应的类型。  
+  
+PreparedStatement接口继承自Statement接口的3种方法：execute()、executeQuery()和executeUpdate()，但这3种方法不需要参数。其中execute()方法用于在PreparedStatement对象中执行SQL语句，该SQL语句可以是任何种类的SQL语句  
+executeQuery()方法用于在PreparedStatement对象中执行SQL查询语句，并返回该查询生成的ResultSet对象  
+executeUpdate()方法用于在PreparedStatement对象中执行SQL语句，该SQL语句必须是一个SQL数据操作语言语句，如Insert、Update、Delete语句，或者是无返回内容的SQL语句，如DDL语句  
+   
+     
+       
+##　EL表达式语言
+为了能够获取Web应用程序中的相关数据，EL表达式中定义了多个隐含对象。PageContext隐含对象用于访问JSP内置对象，如request、response、out、session、config等，例如要获取当前session中的变量，可以
+```
+${PageContext.session.name}
+```
+EL表达式中提供了4个用于访问作用域范围的隐含对象，即pageScope、requestScope、sessionScope、applicationScope，这4个隐含对象只能用来取得指定范围内的属性值，而不能取得其他相关信息。   
+应用这4个隐含对象指定查询标识符的作用域后，系统将不再按照默认的顺序(page、request、session、application)来查找相应标识符。例如，要获取request范围内的goodsName变量
+```
+${requestScope.goodsName}
+```
