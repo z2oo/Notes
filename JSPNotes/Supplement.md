@@ -341,3 +341,112 @@ EL表达式中提供了4个用于访问作用域范围的隐含对象，即pageS
 ```
 ${requestScope.goodsName}
 ```
+  
+    
+## JavaBean简介
+Java Web应用程序设计时使用JavaBean可将Web程序的业务逻辑代码与HTML代码分离，使之成为独立可重复使用的模块，从而实现代码的重用及程序维护的方便  
+JavaBean是一种可重复使用、跨平台的软件组件，在JSP页面中通过特定的JSP标签来访问JavaBean，其可用于多个Web组件进行共享  
+在JSP页面中，可以通过JSP提供的动作标签来操作JavaBean对象，主要包括<JSP:useBean>、<JSP:setProperty>、和<JSP:getProperty>3个动作标签，这3个标签为JSP内置的动作标签，在使用过程中，不需引入第三方的类库  
+JavaBean实际上就是一个Java类，这个类可以重用，可以很好地实现HTML代码与业务逻辑的分离。定义JavaBean的基本要求如下：
+- 所有的Java类必须放在一个包中  
+- 所有的Java类必须声明为public类型，这样才能被外部访问  
+- 类中所有的属性都必须封装，即使用private声明  
+- 封装的属性如果需要被外部所操作，则必须编写对应的setXXX()方法和getXXX()方法  
+- 一个JavaBean中至少存在一个无参构造方法，为JSP中的标签所使用  
+  
+  
+## JSP操作JavaBean对象的动作标签
+### <jsp:useBean>动作标签
+<JSP:useBean>动作标签用于在JSP页面只创建一个JavaBean实例，并通过属性的设置将该实例存放到JSP指定的范围内。语法：
+```
+<jsp:useBean id="实例化对象名称" scope="作用域" class="包名称.类名称">
+</jsp:useBaen>
+```
+属性名称|属性说明
+--|--
+id|表示实例化对象的名称，程序中通过该名称对JavaBean进行引用
+scope|设置JavaBean的作用域，分别为page、request、session和application，默认为page
+class|指定JavaBean的完整类名，由包名与类名结合
+
+### <jsp:setProperty>标签
+<JSP:setProperty>标签用于给JavaBean的属性赋值，要求JavaBean相应的属性要提供setXXX()方法。通常情况下，该标签与<JSP:useBean>标签配合使用。语法：
+```
+<jsp:setProperty name="实例化对象的名称" property="属性名称" value="属性值" param="参数名" />
+```
+属性名|属性说明
+--|--
+name|指定JavaBean的引用名称，即<jsp:useBean>标签中的id属性值，该实例对象必须在其前面使用<jsp:useBean>定义才可以使用
+property|指定需要设置的JavaBean中的属性名称，该属性是必须的，取值有“*”和“JavaBean中的属性名称”
+value| 指定JavaBean中属性值
+param|指定JSP请求中的参数名，通过该参数可以将JSP请求参数的值赋给JavaBean中的属性
+
+<jsp:setProperty>标签中的property、value和param结合使用，根据这3个属性的不同取值，<JSP:setProperty>标签有4种用法：  
+类型|属性设置格式|使用说明
+--|--|--
+自动匹配|property="*"|当HTML表单中空间的name属性值与JavaBean中的属性名一致时，可以使用自动匹配方式，自动调用JavaBean中的setXXX()方法为属性赋值，否则不能赋值
+指定属性|property="属性名称"|当HTML表单中控件的name属性值与JavaBean中的属性名一致时，为名称相同的JavaBean属性赋值，否则不赋值
+指定内容|property="属性名称" value="属性值"|将一个指定的属性值直接赋给JavaBean中指定的属性
+指定参数|property="属性名称" param="参数名" |将JSP请求中request对象参数的值赋JavaBean中指定的属性
+
+  
+### <jsp:getProperty>标签
+<jsp:getProperty>标签用于获取JavaBean中的属性值，但要求JavaBean的属性必须具有相对应getXXX()方法。语法：
+```
+<jsp:getProperty name="实例化对象的名称" property="属性名称"/>
+```
+其中，name属性指定JavaBean的引用名称，property属性指定JavaBean的属性名称
+  
+   
+     
+## JavaBean的作用域
+JavaBean的作用域有4种，分别为page、request、session和application，默认情况下为page。  
+通过<jsp:useBean>标签的scope属性进行设置，这3种作用域与JSP页面中的page、request、session和application的作用域向对应
+选项名称|作用域说明
+--|--
+page|有效范围为客户请求访问的当前JSP页面，以下两种情况会结束其生命周期：1)客户请求访问的当前JSP页面通过<forward>标签请求转发到另一个JSP页面；2)客户请求访问的当前JSP页面执行完毕并向客户端发回响应
+request|有效范围为：1)客户请求访问的当前JSP网页；2)和当前JSP页面共享和当前JSP页面共享同一个客户请求的页面，即当前JSP页面中使用<%@include>标签、<jsp:include>标签和<forward>标签包含的其他JSP页面。　　当所有共享同一个客户请求的JSP页面执行完毕并向客户端发回响应时，JavaBean对象结束生命周期。　　　JavaBean对象作为属性保存在HttpRequest对象中，属性名为JavaBean的id，属性值为JavaBean对象，因此也可以通过HttpRequest.getAttribute()方法取得JavaBean对象
+session|JavaBean对象被创建后，它存在于整个session的声明周期内，同一个session中的JSP页面共享整个JavaBean对象。当session超时或会话结束时JavaBean被销毁。　　JavaBean对象作为属性保存在HttpSession中，可通过HttpSession.getAttribute()方法取得JavaBean对象
+application|存在于整个Web应用的生命周期内，Web应用中的所有JSP页面都能共享同一个JavaBean对象。知道服务器关闭时JavaBean才被销毁可通过application.getAttribute()方法取得JavaBean对象
+
+JavaBean的4种作用域与JavaBean的生命周期息息相关，当JavaBean被创建之后，通过<jsp:setProperty>标签和<jsp:getProperty>标签调用时，将会按照page、request、session和application顺序来查找这个JavaBean实例对象，直到找到一个实例对象为止，如果找不到，最终会抛出异常  
+
+  
+## Model2开发模式
+Model2模式在JSP+JavaBean的模式基础上引入了Servlet技术。这种开发模式遵循MVC的设计理念：
+- JSP作为视图为用户提供了程序交互的界面
+- JavaBean作为模型封装实体对象及业务逻辑
+- Servlet作为控制器接收各种业务请求，并调用JavaBean模型组件对业务逻辑进行处理
+  
+  
+## MVC设计原理
+MVC是一种经典的程序设计理念，该模式将应用程序分为3个部分，分别为模型(Model)、视图(View)和控制(Controller)。  
+### 模型(Model)
+模型是应用的核心部分，包括业务逻辑层和数据访问层。在JavaWeb应用程序中，业务逻辑层一般有JavaBean或EJB来充当，可以是一个实体对象或一种业务逻辑。  
+数据访问层(数据持久层)通常应由JDBC或者Hibernate来实现，主要负责与数据库打交道，如从数据库中取出数据，向数据库中保存数据等。  
+之所以称之为模型，是因为它在应用程序中有更好的重用性和扩展性
+  
+### 视图(View)
+视图提供应用程序与用户之间的交互界面，即JavaWeb应用程序的外观。在MVC模式中，这一层不包含业务逻辑，只提供一种与用户交互的视图，在Web应用程序中由JSP、HTML页面充当。  
+视图可以接受用户的输入，但并不包括任何业务处理，只是将数据转交给控制器  
+  
+### 控制(Controller)
+控制用于对程序中的请求进行控制，将用户输入的数据导入模型，充当宏观调控的作用。在Java Web应用程序中，当用户提交HTML表单时，控制层接收请求并调用相应的模型组件去处理，之后调用相应的视图来显示模型返回的数据。在Web引用程序中由Servlet充当  
+  
+### 模型、视图、控制器的交互关系
+1. 首先是展示视图给用户，用户在视图上进行操作，并填写一些业务数据  
+2. 然后用户单击提交按钮发出请求  
+3. 视图发出的用户请求会到达控制器，请求中包含了想要完成什么样的业务功能及相关的数据  
+4. 控制器会处理用户请求，把请求中的数据进行封装，然后选择并调用合适的模型，请模型进行状态更新，然后选择接下来要展示给用户的视图  
+5. 模型处理用户请求的业务功能，同时进行模型状态的维护和更新  
+6. 当模型状态发生改变的时候，模型会通知相应的视图，告诉视图它的状态发生了改变。  
+7. 视图接收到模型的通知后，会向模型进行状态查询，获取需要展示的数据，然后按照视图本身的展示方式，把这些数据展示出来  
+  
+  
+## Model2模型对MVC的实现方法
+在Java Web应用开发中，通常把JSP+Servlet+JavaBean的模型称为Model2模型。  
+### JSP作为表现层，负责提供页面为用户展示数据，提供相应的表单来用于用户的请求，并在适当的时候(单击提交按钮)向控制器发出请求来请求模型进行更新  
+### Servlet作为控制器，用来接收用户提交的请求，然后获取请求中的数据，将之转换为业务模型需要的数据模型，然后调用业务模型相应的业务方法进行更新，同时根据业务执行结果来选择要返回的视图  
+### JavaBean作为模型，既可以作为数据模型来封装业务数据，又可以作为业务逻辑模型来包含应用的业务操作。其中，数据模型用来存储或传递业务数据，而业务逻辑模型接收到控制器传过来的模型更新请求后，执行特定的业务逻辑处理，然后返回相应的执行结果  
+### Servlet+JSP+JavaBean模型基本的响应顺序是：
+当用户发出一个请求后，这个请求会被控制器Servlet接收到；Servlet将请求的数据转换成数据模型JavaBean，然后调用业务逻辑模型JavaBean的方法，并将业务逻辑模型返回的结果放到合适的地方，如请求的属性里；最后根据业务逻辑模型的返回结果，由控制器来选择合适的视图(JSP)，有视图把数据展现给用户  
+  
