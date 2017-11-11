@@ -120,4 +120,57 @@ localhost:8080/Welcom.actioin
 localhost:8080/pag/Login.action
 ```
 页面显示成功了  
-可以看出namespace在页面访问的URL中才是起作用的，用来区分模块  
+可以看出namespace在页面访问的URL中才是起作用的，namespace使得Action可以在不同的命名空间之间同名 
+它允许以模块化的方式来组织Action  
+
+  
+    
+      
+## 多个Struts配置文件
+在Struts2，应该给每个模块一个Struts配置文件。在这种情况下，可以创建三个文件：
+- audit-struts.xml – 将所有审计模块设置在这里。
+- user-struts.xml – 将所有用户模块设置在这里。
+- struts.xml – 默认设置，包含 struts-audit.xml 和 Struts-user.xml 两个文件。  
+  
+struts.xml
+```
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+"-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+"http://struts.apache.org/dtds/struts-2.0.dtd">
+ 
+<struts>
+ 
+<package name="default" namespace="/" extends="struts-default">
+</package>
+
+<include file="conf/user-struts.xml"></include>
+<include file="conf/audit-struts.xml"></include>
+
+</struts>
+```
+在struts.xml配置文件中引入另外两个配置文件即可   
+这样struts.xml文件分成更小的模块相关的部分   
+  
+    
+      
+## Struts2开发模式
+为了启用 Struts 2 的开发模式，可以通过自动配置显著增加Struts2的开发速度和属性文件加载，以及额外的日志和调试功能。  
+  
+> 自动重新加载功能真的是一个方便的功能。每次修改属性或XML配置文件更改，应用程序不再需要重启才能生效。  
+
+默认情况下，Struts2的开发模式是禁用的  
+### 启用Struts2开发模式
+将“struts.devMode”的值设置为true，可以在Struts的属性文件或XML配置文件。  
+struts.properties
+```
+struts.devMode=true
+```
+struts.xml
+```
+<struts>
+    <constant name="struts.devMode" value="true"/>
+</struts>
+```
+> 开发模式只适合于开发和调试环境。在生产环境中，你必须禁用它。因为整个应用程序的配置它会引起对性能显著影响，属性文件将在每次请求重新加载，许多额外的日志和调试信息也将提供。
+
