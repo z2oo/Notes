@@ -57,8 +57,45 @@ MVC框架的底层机制是：
 经过上面6个步骤，即可基本完成一个Struts2处理流程的开发，也就是执行一次完整的请求->响应过程  
   
 ## Struts2的流程
-StrutsPrepareAndExecuteFilter和XxxAction共同构成了Struts2的控制器，常常把StrutsPrepareAndExecuteFilter称为核心控制器，把XxxAction称为业务控制器  
-XxxAction业务控制器通常并不与物理视图关联，这种做法提供了很好的解耦。  
-业务控制器只负责返回处理结果，而该处理结果与怎样的视图关联，依然由StrutsPrepareAndExecuteFilter来决定。  
-这样做的好处是，如果有一天，需要将某个视图名映射到不同的视图资源，这就无须修改XxxAction的代码，而只是修改配置文件即可  
-在Struts2框架的控制下，用户请求不再向JSP页面发送，而是由核心控制器StrutsPrepareAndExecuteFilter“调用”JSP页面来生成响应，此处的调用并不是直接调用，而是将请求forward到指定JSP页面  
+StrutsPrepareAndExecuteFilter和XxxAction共同构成了Struts2的控制器，常常把StrutsPrepareAndExecuteFilter称为核心控制器，把XxxAction称为业务控制器    
+
+XxxAction业务控制器通常并不与物理视图关联，这种做法提供了很好的解耦。   
+
+业务控制器只负责返回处理结果，而该处理结果与怎样的视图关联，依然由StrutsPrepareAndExecuteFilter来决定。    
+
+这样做的好处是，如果有一天，需要将某个视图名映射到不同的视图资源，这就无须修改XxxAction的代码，而只是修改配置文件即可    
+
+在Struts2框架的控制下，用户请求不再向JSP页面发送，而是由核心控制器StrutsPrepareAndExecuteFilter“调用”JSP页面来生成响应，此处的调用并不是直接调用，而是将请求forward到指定JSP页面    
+  
+# Struts2的常规配置
+虽然Struts2提供了Convention插件来管理Action、结果映射，但对于大部分实际开发来说，通常还是会考虑使用XML文件来管理Struts2的配置信息  
+struts.xml配置文件最大的作用就是配置Action和请求之间的对应关系，并配置逻辑视图名和物理视图资源之间的对应关系。  
+除此之外，struts.xml文件还有一些额外的功能，例如Bean配置、配置常量、导入其他配置文件等  
+  
+## 常量配置
+Struts2除了可使用struts.xml文件来管理配置之外，还可使用struts.properties文件来管理常量，该文件定义了Struts2框架的大量常量  
+struts.properties文件就是一个标准的Properties文件，该文件包含了系列的key-value对，每个key就是一个Struts2常量，该key对应的value就是一个Struts2常量值  
+在web.xml文件中也可以配置Struts2常量  
+  
+Struts2框架按如下搜索顺序来加载Struts2常量：
+1. struts-default.xml：该文件保存在struts2-core-2.1.2.jar文件中  
+2. struts-plugin.xml：该文件保存在struts2-Xxx-2.1.2.jar等Struts2插件JAR中  
+3. struts.xml：该文件是Web应用默认的配置文件  
+4. struts.properties:该文件是Struts2默认的配置文件  
+5. web.xml：该文件是Web应用的配置文件  
+  
+如果在多个文件中配置了同一个Struts2常量，则后一个文件中配置的常量会覆盖前面文件中配置的常量值  
+  
+在不同文件中配置常量的方式是不一样的，但不管在哪个文件中，配置Struts2常量都需要指定两个属性：常量name和常量value，分别指定Struts2的属性名和属性值  
+  
+  
+## 包含其他配置文件
+为了避免struts.xml文件过于庞大，提高struts.xml文件的可读性，可以将一个struts.xml配置文件分解成多个配置文件，然后在struts.xml文件中包含其他配置文件  
+```
+<include file="sturts-part1.xml"/>
+```
+<include>包含其他配置文件，通过这种方式，Struts2能以一种模块化的方式来管理struts.xml配置文件  
+  
+     
+  
+# 实现Action
