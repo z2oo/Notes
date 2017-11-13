@@ -57,3 +57,8 @@ MVC框架的底层机制是：
 经过上面6个步骤，即可基本完成一个Struts2处理流程的开发，也就是执行一次完整的请求->响应过程  
   
 ## Struts2的流程
+StrutsPrepareAndExecuteFilter和XxxAction共同构成了Struts2的控制器，常常把StrutsPrepareAndExecuteFilter称为核心控制器，把XxxAction称为业务控制器  
+XxxAction业务控制器通常并不与物理视图关联，这种做法提供了很好的解耦。  
+业务控制器只负责返回处理结果，而该处理结果与怎样的视图关联，依然由StrutsPrepareAndExecuteFilter来决定。  
+这样做的好处是，如果有一天，需要将某个视图名映射到不同的视图资源，这就无须修改XxxAction的代码，而只是修改配置文件即可  
+在Struts2框架的控制下，用户请求不再向JSP页面发送，而是由核心控制器StrutsPrepareAndExecuteFilter“调用”JSP页面来生成响应，此处的调用并不是直接调用，而是将请求forward到指定JSP页面  
