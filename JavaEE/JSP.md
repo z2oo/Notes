@@ -5,26 +5,32 @@ JSP和Servlet的本质是一样的，因为JSP最终必须编译成Servlet才能
 
 Web应用应该有如下结构：　　  
   
-  
-<webDemo>----这是web应用的名称，可以改变  
-|——WEB-INF  
-|　　　　|——classes  
-|　　　　|——lib  
-|　　　　|——web.xml  
-|——<a.jsp>----此处可以存放任意多个JSP页面
-  
+```  
+         <webDemo>----这是web应用的名称，可以改变  
+    |——WEB-INF  
+    |　　　　|——classes  
+    |　　　　|——lib  
+    |　　　　|——web.xml  
+    |——<a.jsp>----此处可以存放任意多个JSP页面
+```  
   
 # JSP的基本原理
-JSP的本质是Servlet，当用户向指定Servlet发送请求时，Servlet利用输出流动态生成HTMl页面，包括每一个静态的HTML标签和所有在HTML页面中出现的内容。  
+JSP的本质是Servlet，当用户向指定Servlet发送请求时，Servlet利用输出流动态生成HTML页面，包括每一个静态的HTML标签和所有在HTML页面中出现的内容。  
+
 由于包括大量的HTML标签、大量的静态文本及格式等，导致Servlet的开发效率极为低下。所有的表现逻辑，包括布局、色彩及图像等，都必须耦合在Java代码中，这的确让人不胜其烦。JSP的出现弥补了各种不足。  
+
 JSP通过在标准的HTML页面中嵌入Java代码，其静态的部分无须Java程序控制，只有那些需要从数据库读取或需要动态生成的页面内容，才使用Java脚本控制。  
 
 JSP页面的内容由如下两部分组成：
-- 静态部分：标准的HTMl标签、静态的页面内容，这些内容与静态HTMl页面相同。
+- 静态部分：标准的HTML标签、静态的页面内容，这些内容与静态HTML页面相同。
+
 - 动态部分：受Java程序控制的内容，这些内容由Java脚本动态生成。
 
   
+  
+  
 从表面上看，JSP页面已经不再需要Java类，似乎完全脱离了Java面向对象的特征。事实上，JSP的本质仍然是Servlet（一个特殊的Java类），每个JSP页面就是一个Servlet实例——JSP页面由系统编译成Servlet，Servlet再负责相应用户请求。  
+
 也就是说，JSP其实也是Servlet的一种简化，使用JSP时，其实还是使用Servlet，因为Web应用中的每个JSP页面都会由Servlet容器生成对应的Servlet。对于Tomcat而言，JSP页面生成的Servlet放在work路径对应的Web应用下。  
   
   
@@ -39,26 +45,29 @@ Tomcat根据JSP页面生成对应Servlet的Java文件和class文件。
 
 ## 结论
 - JSP文件必须在JSP服务器内运行。
+
 - JSP文件必须生成Servlet才能执行。
 - 每个JSP页面的第一个访问者速度很慢，因为必须等待JSP编译成Servlet。
-- JSP页面的访问者无须安装任何客户端，甚至不需要可以运行Java的运行环境，因为JSP页面输送到客户端的是标准HTMl页面。  
+- JSP页面的访问者无须安装任何客户端，甚至不需要可以运行Java的运行环境，因为JSP页面输送到客户端的是标准HTML页面。  
   
 
-# JSp的4中基本语法
+# JSP的4中基本语法
 ## 1.JSP注释
 JSP注释的格式：
 ```
 <%-- 注释内容 --%>
 ```
-HTMl注释的格式：
+HTML注释的格式：
 ```
 <!-- HTML注释部分--!>
 ```
 HTML的注释可以通过源代码查看到，而JSP的注释是无法通过源代码查看到的。这表明JSP注释不会被发送到客户端。  
 
 ## 2.JSP声明
-JSP声明用于声明变量和方法。在JSP声明中声明方法看起来很特别，似乎不需要定义类就可以直接定义方法。  
+JSP声明用于声明变量和方法。在JSP声明中声明方法看起来很特别，似乎不需要定义类就可以直接定义方法。 
+
 实际上，JSP声明将会转换成对应Servlet的成员变量或成员方法，因此JSP声明依然符合java语法。  
+
 JSP声明的语法格式如下：
 ```
 <%! 声明部分 %>
@@ -67,7 +76,7 @@ JSP声明的语法格式如下：
 > 提示：  
 **由于JSP声明语法定义的变量和方法对应于Servlet类的成员变量和方法，所以JSP声明部分定义的变量和方法可以使用private、public等访问控制符修饰，也可使用static修饰，将其变成类属性和类方法。但不能使用abstract修饰声明部分的方法，因为抽象方法将导致JSP对应的Servlet变成抽象类，从而导致无法实例化。**
 
-JSP页面会编译成一个Servlet类，每个Servlet在容器中只有一个实例；在JSP中声明的变量是成员变量，成员变量只在创建实例时初始化，该变量的值将一直保存，知道实例销毁。  
+JSP页面会编译成一个Servlet类，每个Servlet在容器中只有一个实例；在JSP中声明的变量是成员变量，成员变量只在创建实例时初始化，该变量的值将一直保存，直到实例销毁。  
 
 JSP声明的方法其实是JSP编译中生成的Servlet的实例方法——Java里的方法是不能独立的，即使在JSP页面中也不行。   
 
@@ -88,7 +97,7 @@ JSP声明的方法其实是JSP编译中生成的Servlet的实例方法——Java
 ```
 通常来说，所有可执行Java代码都可通过JSP脚本嵌入HTML页面。  
   
-JSP脚本将转换成Servlet里Service方法的可执行性代码。这意味着在JSP小教本部分也可以声明变量，但在JSP脚本部分声明的变量是局部变量，担不能使用private、public等访问控制符修饰，也不可使用static修饰。 
+JSP脚本将转换成Servlet里Service方法的可执行性代码。这意味着在JSP小脚本部分也可以声明变量，但在JSP脚本部分声明的变量是局部变量，但不能使用private、public等访问控制符修饰，也不可使用static修饰。 
 > **实际上不仅JSP小脚本部分会转换成_jspService方法里的可执行性代码，JSP页面里的所有静态内容都将由这个方法里的输出语句来输出，这就是JSP脚本可以控制JSP页面中静态内容的原因。由于JSP脚本将转换成_jspService方法里的可执行性代码，而Java语法不允许在方法里定义方法，所以JSP脚本里不能定义方法。**
 
 因为JSP脚本中可以放置任何可执行性语句，所以可以利用Java语言功能，例如连接数据库和执行数据库操作。  
@@ -125,7 +134,7 @@ page指令语法格式如下：
 %>
 ```
 个别属性意义：
-- **Language**：声明当前JSP页面使用的脚本语言的种类，因为页面是JSP页面，该属性的值通常是Java，该属性的默认值也是java，所以通常无须设置。  
+- **language**：声明当前JSP页面使用的脚本语言的种类，因为页面是JSP页面，该属性的值通常是Java，该属性的默认值也是java，所以通常无须设置。  
 
 - **extends**：指定JSP页面编译所产生的Java类所继承的父类，或所实现的接口。  
 - **import**：用来导入包。不需显式导入的包有：java.lang.\*、javax.servlet.\*、javax.servlet.jsp.\*、javas.ervlet.http.*  
@@ -148,25 +157,31 @@ page指令语法格式如下：
 
 ## 2.include指令
 使用include指令，可以将一个外部文件嵌入到当前JSP文件中，同时解析这个页面中的JSP语句（如果有的话）。这是个静态的include语句，它会把目标页面的其他编译指令也包含进来，但动态include则不会。  
+
 include既可以包含静态的文本，也可以包含动态的JSP页面。静态的include编译指令会将被包含的页面加入本页面，融合成一个页面，因此被包含页面甚至不是一个完整的页面。  
 
 include指令的语法：
 ```
 <%@include file="relativeURLSpec"%>
 ```
-如果被嵌入的文件经常需要改变，建议使用<jsp:include>操作指令，因为它是动态的include语句。  
+如果被嵌入的文件经常需要改变，建议使用<jsp:include>操作指令，因为它是动态的include语句。
+
 在`staticInclude.jsp`这个页面中使用`<%@include file="scriptlet.jsp"%>`  
 打开`staticInclude_jsp.java`这个文件（即staticInclude.jsp编译后的java文件）可以看到scriptlet.jsp页面的内容被完全融入staticInclude.jsp页面所生成的Servlet中，这就是静态包含意义：包含页面在编译时将完全包含了被包含页面的代码。    
 > 注意：
 **静态包含还会被包含页面的编译指令也包含进来，如果两个页面的编译指令冲突，那么页面就会出错。** 
-
+  
+  
+ 
 
 # JSP的7个动作指令
-动作指令与编译指令不同，编译指令是通知Servlet引擎的处理消息，而动作指令只是运行时的动作。  
+动作指令与编译指令不同，编译指令是通知Servlet引擎的处理消息，而动作指令只是运行时的动作。 
+
 编译指令在将JSP编译成Servlet时起作用；而处理指令通常可替换成JSP脚本，它只是JSP脚本的标准写法。  
   
 JSP动作指令主要有如下7个：
 - jsp:forward  执行页面转向，将请求的处理转发到下一个页面
+
 - jsp:param  用于传递参数，必须与其他支持参数的标签一起使用
 - jsp:include  用于动态引入一个JSP页面
 - jsp:plugin 用于下载JavaBean或者Applet到客户端执行
@@ -176,6 +191,7 @@ JSP动作指令主要有如下7个：
 
 ## 1.forward指令
 forward指令用于将页面响应转发到另外的页面。既可以转发到静态的HTML页面，也可以转发到动态的JSP页面，或者转发到容器中的Servlet。  
+
 forward指令格式：  
 对于JSP1.0，使用如下语法：
 ```
@@ -189,8 +205,10 @@ forward指令格式：
 ```
 第二种语法用于在转发时增加额外的请求参数。增加的请求参数的值可以通过HttpServletRequest类的getParameter()方法获取。  
 
-执行forward指令时，用户请求的地址依然没有发生改变，但页面内容却完全变为forward目标页的内容。  
+执行forward指令时，用户请求的地址依然没有发生改变，但页面内容却完全变为forward目标页的内容。
+
 在JSP页面中使用request内置对象（request对象是HTTPServletRequest的实例）来获取增加的请求参数值。  
+
 执行forward指令转发请求时客户端的请求参数不会丢失。  
 JSP页面不仅可以输出forward指令增加的请求参数，还可以看到表单里的username表单域对应的请求参数，这表明forward时不会丢失请求参数。  
 > 提示：
@@ -199,6 +217,7 @@ JSP页面不仅可以输出forward指令增加的请求参数，还可以看到�
   
 ## 2.include指令
 include指令是一个动态include指令，也用于包含某个页面，它不会导入被include页面的编译指令，仅仅将被导入页面的body内容插入本页面。  
+
 include指令语法：
 ```
 <jsp:include page="{relativeURL|<%=expression%>}" flush="true"/>
@@ -219,35 +238,36 @@ org.apache.jasper.runtime.JspRuntimeLibrary.include(request,response,"目标网�
 这段代码显示了动态导入的关键：动态导入只是使用了一个include方法来插入目标页面的内容，而不是将目标页面完全融入本页面中。  
 
 静态导入和动态导入的三点区别：
-- 静态导入是将导入页面的代码完全融入，两个页面融合成一个整体Servlet；而动态导入则在Servlet中使用include方法来引入被导入页面的内容。
+- 静态导入是将导入页面的代码完全融入，两个页面融合成一个整体Servlet；而动态导入则在Servlet中使用include方法来引入被导入页面的内容。  
+
 - 静态导入时被导入页面的编译指令则失去作用；而动态导入时被导入页面的编译指令则失去作用，只是插入被导入页面的body内容。
 - 动态包含还可以增加额外的参数。
 
   
 > 提示：  
-**forward动作指令和include动作指令十分相似（它们的语法就很相似），它们都采用方法来引入目标页面，通过查看JSP页面所生成的Servlet代码可以得出：forward指令使用_jspx_page_context的forward()方法来引入目标页面，而include指令则使用通过JSPRuntimeLibrary的include()方法来引入目标页面。**
+**forward动作指令和include动作指令十分相似（它们的语法就很相似），它们都采用方法来引入目标页面，通过查看JSP页面所生成的Servlet代码可以得出：forward指令使用_jspx_page_context的forward()方法来引入目标页面，而include指令则使用通过JSPRuntimeLibrary的include()方法来引入目标页面。**  
 **区别在于：执行forward时，被forward的页面将完全代替原有页面；而执行include时，被include的页面只是插入原有页面。**
 
 ## 3.useBean、setProperty、getProperty指令
 这三个指令都是与JavaBean相关的指令。  
-- useBean：用于在JSP页面初始化一个Java实例。
+- useBean：用于在JSP页面初始化一个Java实例。  
 - setProperty：用于为JavaBean实例的属性设置值。
 - getProperty：用于输出JavaBean实例的属性。
 
   
 如果多个JSP页面中需要重复使用某段代码，则可以把这段代码定义成Java类的方法，然后让多个JSP页面调用该方法即可。  
 
-useBean语法：
+### useBean语法：
 ```
 <jsp:useBean id="name" class="classname" scope="page|request|session|application"/>
 ```
 其中，id属性是JavaBean的实例名，class属性确定JavaBean的实现类。scope属性用于指定JavaBean实例的作用范围，该范围有4个值：
-- page：该JavaBean实例仅在该页面有效
+- page：该JavaBean实例仅在该页面有效  
 - request：该JavaBean实例仅在本次请求有效
 - session：该JavaBean实例在本次session内有效
 - application：该JavaBean实例在本应用内一直有效
 
-setProperty语法：
+### setProperty语法：
 ```
 <jsp:setProperty name="BeanName" property="propertyName" value="value"/>
 ```
@@ -255,14 +275,15 @@ setProperty语法：
 - property：确定需要设置的属性名
 - value：确定需要设置的属性值
 
-getProperty语法：
+### getProperty语法：
 ```
 <jsp:getProperty name="BeanName" property="propertyName"/>
 ```
 - name：确定需要输出的JavaBean的实例名
 - property：确定需要输出的属性名
 
-对于setProperty和getProperty而言，它们都要求根据属性名来操作JavaBean的属性，而要求的属性名，与Java类中定义的属性有一定的差别。  
+对于setProperty和getProperty而言，它们都要求根据属性名来操作JavaBean的属性，而要求的属性名，与Java类中定义的属性有一定的差别。 
+
 事实上，当页面使用setProperty和getProperty标签时，系统底层就是调用setXXX()和getXXX()方法来操作Java类的实例的属性。  
   
   
@@ -276,9 +297,10 @@ param指令用于设置参数值，这个指令本身不能单独使用，可以
 - jsp:forward
 - jsp:plugin
 
-当与include指令结合使用时，param指令用于将参数传入被导入的页面；  
-与forward指令结合时，param指令用于将参数值传入被转向的页面；  
+当与include指令结合使用时，param指令用于将参数传入被导入的页面  
+与forward指令结合时，param指令用于将参数值传入被转向的页面  
 与plugin结合时，param指令用于将参数传入页面中的JavaBean实例或applet实例。  
+
 param语法：
 ```
 <jsp:param name="paramName" value="value" />
@@ -329,6 +351,7 @@ application = paqeContext.getServletContext();
 }
 ```
 上面Servlet类表明：request、response两个对象是_jspService()方法的形参，当Tomcat调用该方法时会初始化这两个对象。  
+
 而page、pageContext、application、config、session、out都是_jspService()方法的局部变量，由该方法完成初始化。  
   
 从上面代码可以发现JSP内置对象的实质：它们要么是jspService()方法的形参，要么是_jspService()方法的局部变量，所以可以直接在JSP脚本（脚本将对应于Servlet的_jspService()方法部分）中调用这些对象，无须创建它们。  
@@ -337,6 +360,13 @@ application = paqeContext.getServletContext();
 
 上面的代码中并没有exception内置对象，这说明：只有当页面的page指令的isErrorPage属性为true时，才可使用exception对象。  
 即只有异常处理页面对应Servlet时才会初始化exception对象。  
+## JSP主要内置对象有效作用范围比较
+- page对象只在同一个JSP页面内有效  
+
+- response对象只在JSP页面（包括当前JSP页面中使用<%@include>标签、<jsp:include>标签和<forward>标签包含的其他JSP页面）内有效  
+- request对象在一次访问请求内有效，服务器跳转后依然有效，但客户端跳转之后无效。request表示的是客户端的请求，正常情况下，一次请求服务器只会给予一次回应，那么此时如果服务器端跳转，请求的地址没有改变，也就相当于回应了一次，而如果访问地址改变了，就相当于发出了第二次请求，则第一次请求的内容肯定就已经消失了，所以无法获取  
+- session对象在一次回话范围内有效，无论是客户端跳转还是服务器端跳转都有效，但浏览器关闭后则无效  
+- application对象在服务器中保存所有用户的共享信息，该对象中保存的信息在整个应用中都有效，使得每个用户都能访问该对象
 
 
 ## 1.application对象
