@@ -19,6 +19,7 @@
 - [VMWare安装Ubuntu教程](https://github.com/z2oo/notes/blob/master/Linux/vmware-install%20Ubuntu.md)
 - [rmdir指令](https://github.com/z2oo/notes/blob/master/Linux/rmdir.md)
 - [mv指令](https://github.com/z2oo/notes/blob/master/Linux/mv.md)
+- [cp指令](https://github.com/z2oo/notes/blob/master/Linux/cp.md)
   
 # SQL
 - [JDBC编程步骤](https://github.com/z2oo/notes/blob/master/SQL/StepsOfJDBC.md)
