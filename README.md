@@ -1,6 +1,13 @@
 # Notes
-这是我边学习边记录的地方，希望有一天我也能成为大牛
-  
+这是我边学习边记录的地方，希望有一天我也能成为大牛  
+# 最近目标
+1. 并发编程
+2. 设计模式
+3. spring
+4. 网络连接
+5. mysql
+6. hibernate
+
 # JavaEE
 
 - [JSP复习资料](https://github.com/z2oo/notes/blob/master/JavaEE/JSP.md)
