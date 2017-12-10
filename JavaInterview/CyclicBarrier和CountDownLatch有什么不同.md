@@ -1,0 +1,4 @@
+# CyclicBarrier和CountDownLatch有什么不同
+CyclicBarrier和CountDownLatch都可以用来让一组线程等待其他线程  
+
+与CyclicBarrier不同的是，CountdownLatch不能重新使用  
