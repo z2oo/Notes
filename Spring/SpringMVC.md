@@ -1,0 +1,13 @@
+# SpringMVC
+在SpringMVC中，DispatcherServlet就是前端控制器  
+
+DispatcherServlet需要知道应该将请求发送给哪个控制器，所以DispatcherServlet以会查询一个或多个处理器映射(handler mapping)来去顶请求的下一站在哪里。处理器映射会根据请求所携带的URL信息进行决策  
+
+控制器在完成逻辑处理后，通常会产生一些信息，这些信息需要返回给用户并在浏览器上显示。这些信息被称为模型(model)  
+
+传递给DispatcherServlet的视图名并不能直接表示某个特定的JSP。实际上，它甚至并不能确定视图就是JSp。相反，它仅仅传递了一个逻辑名称，这个名字将会用来查找产生结果的真正视图。DispatcherServlet将会使用视图解析器(view resolver)来将逻辑视图名匹配为一个特定的视图实现  
+
+扩展AbstractAnnotationConfigDispatcherServletInitializer的任意类都会自动地配置DispatcherServlet和Spring应用上下文，Spring的应用上下文会位于应用程序的Servlet上下文之中  
+
+当DispatcherServlet启动的时候，它会创建Spring应用上下文，并加载配置文件或配置类中所声明的bean。但是在Spring Web应用中，通常还会有另外一个应用上下文。另外的这个上下文是由ContextLoaderListener创建的  
+
