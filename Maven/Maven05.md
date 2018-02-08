@@ -4,42 +4,54 @@ Maven 使用原型（archetype）插件创建工程。要创建一个简单的 J
 我们打开命令控制台，跳转到 C:\MVN 目录，并执行下面的 mvn 命令。
 ```
 C:\MVN>mvn archetype:generate
--DgroupId=com.companyname.bank 
--DartifactId=consumerBanking 
--DarchetypeArtifactId=maven-archetype-quickstart 
--DinteractiveMode=false
+```
+  
+```
+Choose a number or apply filter (format: [groupId:]artifactId, case sensitive co
+ntains): 1122:
+Choose org.apache.maven.archetypes:maven-archetype-quickstart version:
+1: 1.0-alpha-1
+2: 1.0-alpha-2
+3: 1.0-alpha-3
+4: 1.0-alpha-4
+5: 1.0
+6: 1.1
+Choose a number: 6: 6
+Define value for property 'groupId': com.companyname.bank
+Define value for property 'artifactId': consumerBanking
+Define value for property 'version' 1.0-SNAPSHOT: :
+Define value for property 'package' com.companyname.bank: :
+Confirm properties configuration:
+groupId: com.companyname.bank
+artifactId: consumerBanking
+version: 1.0-SNAPSHOT
+package: com.companyname.bank
+ Y: : y
 ```
 Maven 将开始处理，并将创建完成的 java 应用工程结构。
 
 ```
-INFO] Scanning for projects...
-[INFO] Searching repository for plugin with prefix: 'archetype'.
-[INFO] -------------------------------------------------------------------
-[INFO] Building Maven Default Project
-[INFO]    task-segment: [archetype:generate] (aggregator-style)
-[INFO] -------------------------------------------------------------------
-[INFO] Preparing archetype:generate
-[INFO] No goals needed for project - skipping
-[INFO] [archetype:generate {execution: default-cli}]
-[INFO] Generating project in Batch mode
-[INFO] -------------------------------------------------------------------
-[INFO] Using following parameters for creating project 
- from Old (1.x) Archetype: maven-archetype-quickstart:1.0
-[INFO] -------------------------------------------------------------------
-[INFO] Parameter: groupId, Value: com.companyname.bank
-[INFO] Parameter: packageName, Value: com.companyname.bank
+[INFO] -------------------------------------------------------------------------
+---
+[INFO] Using following parameters for creating project from Old (1.x) Archetype:
+ maven-archetype-quickstart:1.1
+[INFO] -------------------------------------------------------------------------
+---
+[INFO] Parameter: basedir, Value: C:\Users\Asus\Desktop\maven
 [INFO] Parameter: package, Value: com.companyname.bank
+[INFO] Parameter: groupId, Value: com.companyname.bank
 [INFO] Parameter: artifactId, Value: consumerBanking
-[INFO] Parameter: basedir, Value: C:\MVN
+[INFO] Parameter: packageName, Value: com.companyname.bank
 [INFO] Parameter: version, Value: 1.0-SNAPSHOT
-[INFO] project created from Old (1.x) Archetype in dir: C:\MVN\consumerBanking
-[INFO] ------------------------------------------------------------------
-[INFO] BUILD SUCCESSFUL
-[INFO] ------------------------------------------------------------------
-[INFO] Total time: 14 seconds
-[INFO] Finished at: Tue Jul 10 15:38:58 IST 2012
-[INFO] Final Memory: 21M/124M
-[INFO] ------------------------------------------------------------------
+[INFO] project created from Old (1.x) Archetype in dir: C:\Users\Asus\Desktop\ma
+ven\consumerBanking
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 03:24 min
+[INFO] Finished at: 2018-02-08T13:45:03+08:00
+[INFO] Final Memory: 15M/269M
+[INFO] ------------------------------------------------------------------------
 ```
 
 现在跳转到 C:/MVN 目录。有将看到一个名为 consumerBanking 的 java 应用工程（就像在 artifactId 中设定的一样）。Maven 使用一套标准的目录结构，就像这样：  
