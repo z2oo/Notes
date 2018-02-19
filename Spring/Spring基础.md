@@ -225,3 +225,158 @@ public class StoneAxe implements Axe{
 ```
 到此为止，程序依然不知道 Chinese 类和哪个 Axe 实例耦合， Spring 当然也不知道，Spring 需要使用 XML 配置文件来指定实例之间的依赖关系  
 
+在配置文件中，Spring 配置 Bean 实例通常会指定两个属性  
+- id：指定该 Bean 的唯一标识，Spring 根据 id 属性值来管理 Bean，程序通过 id 属性值来访问该 Bean 实例  
+- class：指定该 Bean 的实现类，此处不可再用接口，必须使用实现类，Spring 容器会使用 XML 解析器读取该属性值，并利用反射来创建该实现类的实例
+  
+可以看到 Spring 管理 Bean 的灵活性。Bean 与 Bean 之间的依赖关系放在配置文件里组织，而不是写在代码里。  
+
+通过配置文件的指定，Spring 能够精确地为每个 Bean 的成员变量注入值  
+
+Spring 会自动检测每个<bean>定义里的<property>元素定义，Spring 会在调用默认的构造器创建 Bean 实例之后，立即调用对应的 setter 方法为 Bean 的成员变量注入值  
+
+每个 Bean 的 id 属性是该 Bean 的唯一标识，程序通过 id 属性值访问 Bean，Spring 容器也通过 Bean 的 id 属性值管理 Bean 与 Bean 之间的依赖  
+
+主程序代码：
+```
+public class BeanTest{
+    public static void main(String[] args) throws Exception{
+        //创建 Spring 容器
+        ApplicationContext ctx=new ClassPathXmlApplicationContext("beans.xml");
+        //获取 chinese 实例
+        Person p=ctx.getBean("chinese",Person.class);
+        //调用 useAxe() 方法
+        p.useAxe();
+    }
+}
+```
+
+上面代码实现了创建 Sring 容器，并通过 Spring 容器来获取 Bean 实例  
+
+主程序调用 Person 的useAxe() 方法时，该方法的方法体内需要使用 Axe 实例，但程序没有任何地方将特定的 Person 实例和 Axe 实例耦合在一起。或者说，程序没有为 Person 实例出入 Axe 实例， Axe 实例由 Spring 在运行期间注入  
+
+Person 实例不仅不需要了解 Axe 实例的实现类，甚至无须了解 Axe 的创建过程  
+
+Spring 容器根据配置文件的指定，创建 Person 实例时，不仅创建了 Person 对象，并为该对象注入它所依赖的 Axe 实例  
+
+假设有一天，系统需要改变 Axe 的实现——这种改变，对于实际开发是很常见的情形，也许是因为技术的改进，也许是因为性能的优化，也许是因为需求的变化，此时只需要给出 Axe 的另一个实现，而 Person 接口、Chinese 类的代码无须任何改变  
+
+从切换来看，因为 chinese 实例与具体的 Axe 实现类没有任何关系，chinese 实例仅仅与 Axe 接口耦合，这就保证了 chinese 实例与 Axe 实例之间的松耦合——这也是 Spring 强调面向接口编程的原因  
+
+Bean 与 Bean 之间的依赖关系由 Spring 管理，Spring 采用 setter 方法为目标 Bean 注入所依赖的 Bean，这种方式被称为 设值注入  
+
+Spring IoC 容器的三个基本要点：
+- 应用程序的各组件面向接口编程。面向接口编程可以将组件之间的耦合关系提升到接口层次，从而有利于项目后期的扩展  
+- 应用程序的各组件不再由程序主动创建，而是由 Spring 容器来负责产生并初始化 
+- Spring 采用配置文件或注解来管理 Bean 的实现类、依赖关系，Spring 容器则根据配置文件或注解，利用反射来创建实例，并为之注入依赖关系
+
+
+## 构造注入
+通过 setter 方法为目标 Bean 注入依赖关系的方式被称为设值注入；另外还有一种注入方式，这种方式在构造实例时，已经为其完成了依赖关系的初始化。  
+
+这种利用构造器来设置依赖关系的方式，被称为 构造注入  
+
+通俗来说，就是驱动 Spring 在底层以反射方式执行带指定参数的构造器，当执行带参数的构造器时，就可利用构造器参数对成员变量执行初始化——这就是 构造注入 的本质  
+
+现在的问题就是：  
+<bean>元素默认总是驱动 Spring 调用无参数的构造器来创建对象，那怎样驱动 Spring 调用有参数的构造器去创建对象呢?  
+
+答案是<constructor-arg/>子元素，每个 <constructor-arg>子元素代表一个构造器参数，如果<bean>元素包含 N 个<constructor-arg>子元素，就会驱动 Spring 调用带 N 个参数的构造器来创建对象  
+
+对前面代码中的 Chinese 类做简单的修改  
+```
+public class Chinese implements Person{
+    private Axe axe;
+    //构造注入所需的带参数的构造器
+    public Chinese(Axe axe){
+        this.axe=axe;
+    }
+    //实现 Person 接口的 useAxe() 方法
+    public void useAxe(){
+        //调用 axe 的 chop() 方法
+        //表明 Person 对象依赖于 axe 对象
+        System.out.println(axe.chop());
+    }
+}
+
+```
+
+上面的 Chinese 类没有提供设置 axe 成员变量的 setter 方法，仅仅提供了一个带有 Axe 参数的构造器，Spring 将通过该构造器为 chinese 注入所依赖的 Bean 实例  
+
+构造注入的配置文件也需要做简单的修改，为了使用构造注入(也就是驱动 Spring 调用有参数的构造器创建对象)，还需要使用<constructor-arg>元素指定构造器的参数   
+
+修改后的配置文件如下  
+```
+<!--配置 chinese 实例，其实现类是 Chinese -->
+<bean id="chinese" class="org.crazyit.app.service.impl.Chinese">
+    <!-- 下面只有一个constructor-arg子元素，
+        驱动 Spring 调用 Chinese 带一个参数的构造器来创建对象 -->
+    <constructor-arg ref="steelAxe"/>
+</bean>
+<!--配置stoneAxe实例，其实现类是StoneAxe-->
+<bean id="stoneAxe" class="org.crazyit.app.service.impl.StoneAxe"/>
+<!-- 配置steelAxe实例，其实现类是SteelAxe-->
+<bean id="steelAxe" class="org.crazyit.app.service.impl.SteelAxe"/>
+```
+
+上面配置文件中代码使用了<constructor-arg>元素指定了一个构造器参数，该参数类型是 Axe ，这指定 Spring 调用 Chinese 类里带一个 Axe 参数的构造器来创建 chinese 实例。也就是说，这段代码相当于驱动 Spring 执行如下代码：
+```
+String idStr=...//Spring 解析 id 属性值为 chinese
+String refStr=...//解析 <constructor-arg>元素的 ref 属性值为 steelAxe
+Object paramBean=container.get(refStr);
+//Spring 会用反射方式执行下面代码，此处为了降低阅读难度，该行代码没有使用反射
+Object obj=new org.crazyit.app.service.impl.Chinese(paramBean);
+//container 代表 Spring 容器
+container.put(idStr,obj);
+```
+从上面代码可以看出，由于使用了有参数的构造器创建实例，所以当 Bean 实例被创建完成后，该 Bean 的依赖关系已经设置完成  
+
+该示例的执行效果与设值注入 steelAxe时的执行效果完全一样。区别在于：  
+创建 Person 实例中 Axe 属性的时机不同——设值注入是先通过无参数的构造器创建一个 Bean 实例，然后调用对应的 setter 方法注入依赖关系；而构造注入则直接调用有参数的构造器，当 Bean 实例创建完成后，已经完成了依赖关系的注入  
+
+配置<constructor-arg>元素时可以指定一个 index 属性，用于指定该构造参数值将作为第几个构造参数值，例如，指定 index="0"表明该构造参数值将作为第一个构造参数值  
+
+如果在配置文件中通过构造注入来创建 Bean ，配置代码如下：
+```
+<bean id="bean1" class="lee.Test1">
+    <constructor-arg value="hello"/>
+    <constructor-arg value="23"/
+</bean>
+```
+上面代码相当于让 Spring 调用如下代码(Spring 底层用反射执行):
+```
+Object bean1=new lee.Test1("hello","23");①
+```
+由于 Spring 本身提供了功能强大的类型转换机制，因此如果lee.Test1只包含一个 Test1(String,int) 构造器，那么上面的配置片段相当于让 Spring 执行如下代码：
+```
+bean1=new lee.Test1("hello",23);②
+```
+这就产生了一个问题，如果lee.Test1类既有 Test1(String,String) 构造器，又有 Test1(String,int)构造器，那么上面的配置片段到底让 Spring 执行哪行代码?  
+
+答案是 ① 号代码，因为此时的配置还不够明确：对于<constructor-arg value="23"/>，Spring 只能解析出一个"23"字符串，但它到底需要转换为哪种数据类型——从配置文件中看不出来，只能根据 lee.Test1的构造器来尝试转换  
+
+为了更明确地指定数据类型， Spring 允许为<constructor-arg>元素指定一个 type 属性，例如<constructor-arg value="23" type="int"/>此处 Spring 明确知道此处配置了一个 int 类型的参数，与此类似，<value>元素也可以指定 type 属性，用于确定该属性值的数据类型  
+
+
+## 两种注入方式的对比
+这两种 依赖注入 方式并没有绝对的好坏，只是适应场景有所不同  
+
+设值注入 的优点：
+- 与传统的 JavaBean 的写法更相似，程序开发人员更容易理解、接受。通过 setter 方法设定依赖关系显得更加直观、自然  
+- 对于复杂的依赖关系，如果采用构造注入，会导致构造器过于臃肿，难以阅读。 Spring 在创建 Bean 实例时，需要同时实例化其依赖的全部实例，因而导致性能下降。而使用设值注入，则能避免这些问题
+- 尤其是在某些成员变量可选的情况下，多参数的构造器更加笨重  
+
+构造注入 的优点：
+- 构造注入可以在构造器中决定依赖关系的注入顺序，优先依赖的优先注入。例如，组件中有其他依赖关系的注入，常常需要依赖于 Datasource 的注入。采用构造注入，可以在代码中清晰地决定注入顺序  
+- 对于依赖关系无须变化的 Bean，构造注入更有用处。因为没有 setter 方法，所有的依赖关系全部在构造器内设定。因此，无须担心后续的代码对依赖关系产生破坏  
+- 依赖关系只能在构造器中设定，则只有组件的创建者才能改变组件的依赖关系。对组件的调用者而言，组件内部的依赖关系完全透明，更符合高内聚的原则
+
+建议采用以设值注入为主，构造注入为辅的注入策略  
+
+对于依赖关系无须变化的注入，尽量采用构造注入；而其他依赖关系的注入，则考虑采用设值注入  
+
+
+
+
+
+
