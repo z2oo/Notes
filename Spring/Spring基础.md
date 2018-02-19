@@ -167,4 +167,61 @@ Spring 框架的核心功能有两个
 - **构造注入**：IoC容器使用构造器来注入被依赖对象  
 
 
+## 设值注入
+设值注入是指 IoC 容器通过成员变量的 setter 方法来注入被依赖对象  
+
+这种注入方式简单、直观，因而在 Spring 的依赖注入里大量使用  
+
+Spring 推荐 面向接口编程  
+
+不管是调用者，还是被依赖对象，都应该为之定义接口，程序应该面向它们的接口，而不是面向实现类编程，这样以便程序后期的升级、维护  
+
+下面先定义一个 Person 接口，该接口定义了一个 Person 对象应遵守的规范  
+```
+public interface Person{
+    //定义一个使用斧头的方法
+    public void useAxe();
+}
+```
+下面是Axe接口的代码
+```
+public interface Axe{
+    //Axe接口中定义一个chop()方法
+    public String chop();
+}
+```
+
+Spring 推荐面向接口编程，这样可以更好地让规范和实现分离，从而提供更好的解耦。  
+
+对于一个 JavaEE 应用，不管是 DAO 组件，还是业务逻辑组件，都应该先定义一个接口，该接口定义了该组件应该实现的功能，但功能的实现则由其实现类提供  
+
+下面是 Person 实现类的代码
+```
+public class Chinese implements Person{
+    private Axe axe;
+    //设值注入所需的 setter 方法
+    public void setAxe(Axe axe){
+        this.axe=axe;
+    }
+    //实现 Person 接口的 useAxe()方法
+    public void useAxe(){
+        //调用 axe 的 chop() 方法
+        //表明 Person 对象依赖于 axe 对象
+        System.out.println(axe.chop());
+    }
+}
+```
+上面代码实现了 Person 接口的 useAxe() 方法，实现该方法时调用了 axe 的 chop() 方法，这就是典型的 依赖关系  
+
+在上面的 Chinese 类中，Chinese 类并不知道它要调用的 axe 实例在哪里，也不知道 axe 实例是如何实现的，它只是需要调用 Axe 对象的方法，这个 Axe 实例将由 Spring 容器负责注入  
+
+下面提供一个 Axe 的实现类：StoneAxe
+```
+public class StoneAxe implements Axe{
+    public String chop(){
+        return "石斧砍柴好慢";
+    }
+}
+```
+到此为止，程序依然不知道 Chinese 类和哪个 Axe 实例耦合， Spring 当然也不知道，Spring 需要使用 XML 配置文件来指定实例之间的依赖关系  
 
