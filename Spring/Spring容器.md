@@ -71,3 +71,16 @@ ApplicationContext appContext=new ClassPathXmlApplicationContext("beans.xml","se
 
 ApplicationContext 允许以声明式方式操作容器，无须手动创建它。可利用如 ContextLoader 的支持类，在 Web 应用启动时自动创建 ApplicationContext，当然，也可以采用编程方式创建 ApplicationContext  
 
+除了提供 BeanFactory 所支持的全部功能外，ApplicationContext还有如下额外功能
+- ApplicationContext 默认会预初始化所有的 singleton Bean，也可通过配置取消预初始化功能
+- ApplicationContext 继承 MessageSource 接口，因此提供国际化支持
+- 资源访问，比如访问 URl 和文件
+- 事件机制
+- 同时加载多个配置文件
+- 以声明式方式启动并创建 Spring 容器
+
+ApplicationContext 包括 BeanFactory 的全部功能，因此建议优先使用 ApplicationContext，除非对于某些内存非常关键的应用，才考虑使用 BeanFactory  
+
+当系统创建 ApplicationContext 容器时，默认会预初始化所有的 singleton Bean。也就是说，当 ApplicationContext 容器初始化完成后，容器会自动初始化所有的 singleton Bean，包括调用构造器创建该 Bean 的实例，并根据<property>元素执行 setter 方法。这意味着：
+> 系统前期创建 ApplicationContext 时将有较大的系统开销，但一旦 ApplicationContext 初始化完成，程序后面获取 singleton Bean 实例时将拥有较好的性能  
+
