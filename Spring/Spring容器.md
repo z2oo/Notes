@@ -84,3 +84,46 @@ ApplicationContext 包括 BeanFactory 的全部功能，因此建议优先使用
 当系统创建 ApplicationContext 容器时，默认会预初始化所有的 singleton Bean。也就是说，当 ApplicationContext 容器初始化完成后，容器会自动初始化所有的 singleton Bean，包括调用构造器创建该 Bean 的实例，并根据<property>元素执行 setter 方法。这意味着：
 > 系统前期创建 ApplicationContext 时将有较大的系统开销，但一旦 ApplicationContext 初始化完成，程序后面获取 singleton Bean 实例时将拥有较好的性能  
 
+
+---
+
+Spring 的国际化支持，其实是建立在 Java 程序国际化的基础之上的。其核心思路都是将程序中需要实现的国际化的信息写入资源文件，而代码中仅仅使用相应的各信息的 Key  
+
+### ApplicationContext的事件机制
+ApplicationContext 的事件机制是观察者设计模式的实现，通过 ApplicationEvent 类和 ApplicationListener 接口，可以实现 ApplicationContext 的事件处理  
+
+如果容器中有一个 ApplicationListener Bean，每当 ApplicationContext 发布 ApplicationEvent 时，ApplicationListener Bean 将自动触发  
+
+Spring 的事件框架有如下两个重要成员
+- ApplicationEvent：容器事件，必须由 ApplicationContext 发布
+- ApplicationListener：监听器，可由容器中的任何监听器 Bean 担任
+
+实际上，Spring 的事件机制与所有的事件机制都基本相似，它们都需要由事件源、事件和事件监听器组成；只是此处的事件源是 ApplicationContext，且事件必须由 Java程序显式触发  
+
+
+
+```
+sequenceDiagram
+程序->>ApplicationContext: 发布ApplicationEvent事件
+ApplicationContext->>ApplicationListener: 激发监听器
+
+```
+只要一个 Java 类继承了 ApplicationEvent 基类，那该对象就可作为 Spring 容器的容器事件  
+
+容器事件的监听器类必须实现 ApplicationListener 接口，实现该接口必须实现如下方法：
+- onApplicationEvent(ApplicationEvent event)：每当容器内发生任何事件时，此方法都被触发
+
+当系统创建 Spring 容器、加载 Spring 容器时会自动触发容器事件，容器事件监听器可以监听到这些事件。除此之外，程序也可调用 ApplicationContext 的 pulishEvent() 方法来主动触发容器事件
+
+---
+
+前面都是程序先创建 Spring 容器，再调用 Spring 容器的 getBean() 方法来获取 Spring 容器中的 Bean。在这种访问模式下，程序总是持有 Spring 容器的引用  
+
+但在 Web 应用中，Spring 容器通常采用 声明式 方式配置产生：  
+
+开发者只要在 web.xml 文件中配置一个 Listener，该 Listener 将会负责初始化 Spring 容器，前端 MVC 框架可以直接调用 Spring 容器中的 Bean，无须访问 Spring 容器本身。在这种情况下，容器中的 Bean 处于容器管理下，无须主动访问容器，只需接受容器的依赖注入即可  
+
+在某些情况下，Bean 需要实现某个功能(比如该 Bean 需要输出国际化消息，或者该 Bean 需要向 Spring 容器发布事件...)，但该功能必须借助于 Spring 容器才能实现，此时就必须让该 Bean 先获取 Spring 容器，然后借助于 Spring 容器来实现该功能  
+
+为了让 Bean 获取它所在的 Spring 容器，可以让该 Bean 实现 BeanFactoryAware 接口
+
