@@ -131,3 +131,125 @@ byType 规则是根据 setter 方法的参数类型与 Bean 的类型进行匹�
 
 在某些情况下，程序希望将某些 Bean 排除在自动装配之外，不作为 Spring 自动装配策略的候选者，此时可设置 autowire-candidate 属性，通过为 <bean> 元素设置 autowire-candidate="false"，即可将该 Bean 排除在自动装配之外，容器在查找自动装配 Bean 时将不考虑该 Bean  
 
+
+### 注入嵌套Bean
+如果某个 Bean 所依赖的 Bean 不想被 Spring 容器直接访问，则可以使用嵌套 Bean  
+
+把 <bean> 配置成 <property> 或 <constructor-args> 的子元素，那么该 <bean> 元素配置的 Bean仅仅作为 setter 注入、构造注入的参数，这种 Bean 就是嵌套 Bean。由于容器不能获取嵌套 Bean，因此它不需指定 id 属性  
+
+```
+<bean id="chinese" class="org.crazyit.app.service.impl.Chinese">
+    <!-- 驱动调用 chinese 的 setAxe() 方法，使用嵌套 Bean 作为参数-->
+    <property name="axe">
+        <!-- 嵌套 Bean 配置的对象仅作为 setter 方法的参数，嵌套 Bean 不能被容器访问，因此无须指定 id 属性 -->
+        <bean class="org.crazyit.app.service.impl.SteelAxe"/>
+    </property>
+</bean>
+```
+采用上面的配置形式可以保证嵌套 Bean 不能被容器访问，因此不用担心其他程序修改嵌套 Bean。外部 Bean 的用法与之前的用法完全一样，使用结果也没有区别  
+
+> 注意  
+嵌套 Bean 提高了程序的内聚性，但降低了程序的灵活性。只有在完全确定无须通过 Spring 容器访问某个 Bean 实例时，才考虑使用嵌套 Bean 来配置该 Bean 
+
+**使用嵌套 Bean 与使用 ref 引用容器中的另一个 Bean 在本质上是一样的**  
+
+Spring 框架的本质就是 **通过 XMl 配置文件来驱动 Java 代码**，当程序要调用 setter 方法或有参数的构造器时，程序总需要传入参数值，随参数类型的不同，Spring 配置文件当然也要随之改变
+- 形参类型是基本类型、String、日期等，直接使用 value 指定字面值即可  
+- 形参类型是复合类(如 Person、Dog、DataSource等)，那就需要传入一个 Java 对象作为实参，于是有两种方式：
+    - ①使用 ref 引用一个容器中已配置的 Bean(Java 对象)
+    - ②使用 <bean> 元素配置一个嵌套 Bean(Java 对象)
+
+### 注入集合值
+如果需要调用形参类型为集合的 setter 方法，或调用形参类型为集合的构造器，则可使用集合元素 <list>、<set>、<map>和<props> 分别来设置类型为 List、Set、Map 和 Properties 的集合参数值  
+
+```
+<list>
+    <!-- 每个 value、ref、bean...都配置一个 List 元素 -->
+    <value>小学</value>
+    <value>中学</value>
+    <value>大学</value>
+</list>
+```
+```
+<map>
+    <!-- 每个 entry 都配置一个 key-value 对-->
+    <entry key="数学" value="87"/>
+    <entry key="英语" value="90"/>
+</map>
+```
+```
+<props>
+    <!-- 每个prop 元素都配置一个属性项，其中 key 指定属性名-->
+    <prop key="血压">正常</prop>
+    <prop key="身高">175</prop>
+</props>
+```
+```
+<set>
+    <!-- 每个value、ref、bean..都配置一个Set 元素-->
+    <value>普通的字符串</value>
+    <bean class="org.crazyit.app.service.impl.SteelAxe"/>
+    <ref bean="stoneAxe"/>
+    <!-- 为Set 集合配置一个 List 集合作为元素-->
+    <list>
+        <value>20</value>
+        <!-- 再次为 List 集合配置一个 Set 集合作为元素-->
+        <set>
+            <value type="int">30</value>
+        </set>
+    </list>
+</set>
+```
+<props> 元素用于配置 Properties 类型的参数值，Properties类型是一种特殊的类型，其 key 和 value 都只能是字符串，故 Spring 配置 Properties 类型的参数值比较简单：**每个key-value 对只要分别给出 key 和 value 就足够了——而且key 和 value 都是字符串类型**，所以使用 如下格式的 <prop> 元素就足够了
+- <prop key="血压">正常</prop>,key 属性指定 key 的值，<prop>元素的内容指定 value 的值
+
+Spring 还提供了一个简化语法来支持 Properties 形参的 setter 方法，例如：
+```
+<property name="health">
+    <value>
+        pressure=normal
+        height=175
+    </value>
+</property>
+```
+
+然而上面的配置方式有一个很大的限制：属性名、属性值都只能是英文、数字，不可出现中文  
+
+从 Spring 2.0 开始，Spring IoC 容器将支持集合的合并，子 Bean 中的集合属性值可以从其父 Bean 的集合属性继承和覆盖而来。也就是说，子 Bean 的集合属性的最终值是 父 Bean、子 Bean 合并后的最终结果，而且子 Bean 集合中的元素可以覆盖父 Bean 集合中对应的元素  
+
+下面的配置片段示范了集合合并的特性：
+```
+<beans>
+    <!--将父Bean 定义成抽象 Bean-->
+    <bean id="parent" abstract="true" class="example.ComplexObject">
+        <!--定义 Properties 类型的集合属性-->
+        <property name="adminEmails">
+            <props>
+                <prop key="administrator">administrator@crazyit.org</prop>
+                <prop key="support">support@crazyit.org</prop>
+            </props>
+        </property>
+    </bean>
+</beans>
+```
+上面配置片段中 child Bean 继承了 parent Bean，并为 <props>元素指定了 merge="true"，这将会把parent Bean 的集合属性合并到 child Bean中；当进行合并时，由 child Bean 再次配置了名为 support 的属性，所以该属性将会覆盖 parent Bean 中的配置定义，于是 child Bean 的 adminEmails 属性值将变为自定义的  
+
+## Spring的 Bean 和 JavaBean
+Spring 容器对 Bean 没有特殊的要求，甚至不要求该 Bean 像标准的 JavaBean——必须为每个属性提供对应的 getter 和 setter 方法  
+
+Spring 中的 Bean 是 Java 实例、Java 组件；而传统 Java 应用中的 JavaBean 通常作为 DTO(数据传输对象)，用来封装值对象，在各层之间传递数据  
+
+Spring 中的 Bean 比 JavaBean 的功能要复杂，用法也更丰富。  
+
+当然，传统的 JavaBean 也可作为 Spring 的 Bean，从而接受 Spring 的管理  
+
+虽然 Spring 对 Bean 没有特殊要求，但依然建议 Spring 中的 Bean 应满足如下几个规则
+- 尽量为每个 Bean 实现类提供无参数的构造器
+- 接受构造注入的 Bean，则应提供对应的、带参数的构造函数
+- 接受设值注入的 Bean，则应提供对应的 setter ，并不要求提供对应的 getter 方法
+
+传统的 JavaBean 和 Spring 中的 Bean存在如下区别
+- 用处不同：传统的 JavaBean 更多是作为值对象传递参数；Spring 的 Bean 用处几乎无所不包，任何应用组件都被称为 Bean  
+- 写法不同：传统的 JavaBean 作为值对象，要求每个属性都提供 getter 和 setter 方法；但 Spring 的 Bean 只需接受设值注入的属性提供 setter 方法即可
+- 生命周期不同：传统的 JavaBean 作为值对象传递，不接受任何容器管理其生命周期；Spring 中的 Bean 由 Spring 管理其生命周期行为
+
