@@ -52,6 +52,7 @@ Spring 容器会自动检测容器中的所有 Bean，如果发现某个 Bean �
 
 ---
 
+
 ## 获得 Bean 本身的id
 当程序员在开发一个 Bean 类时，该 Bean 何时被部署到 Spring 容器中，部署到 Spring 容器时所指定的 id 是什么，开发该 Bean 类的程序员无法提前预知  
 
