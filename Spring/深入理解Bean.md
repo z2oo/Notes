@@ -56,7 +56,7 @@ Spring 容器会自动检测容器中的所有 Bean，如果发现某个 Bean �
 ## 获得 Bean 本身的id
 当程序员在开发一个 Bean 类时，该 Bean 何时被部署到 Spring 容器中，部署到 Spring 容器时所指定的 id 是什么，开发该 Bean 类的程序员无法提前预知  
 
-此时，借助 Spring 提供的 BeanNameAware 接口，通过该接口即可提前预知该 Bean 的配置 id  
+此时，借助 Spring 提供的 BeanNameAware 接口，通过该接口即可提前预知该 Bean 的配置 id   
 
 BeanNameAware 接口提供一个方法：setBeanName(String name)，该方法的 name 参数就是 Bean 的id，实现该方法的 Bean 类就可通过该该方法来部署该 Bean 的 id 了  
 
