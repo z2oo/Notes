@@ -166,3 +166,100 @@ public class Chinese implements Person{
 
 ---
 
+## Spring 4.0 增强的自动装配和精确装配
+Spring 提供了 @Autowired 注解来指定自动装配，@Autowired 可以修饰 setter 方法、普通方法、实例变量和构造器等  
+
+当使用 @Autowired 标注 setter 方法时，默认会采用 byType 自动装配策略，如  
+```
+@Component
+public class Chinese implements Person{
+    ...
+    //axe 的 setter 方法
+    @Autowired
+    public void setAxe(Axe axe){
+        this.axe=axe;
+    }
+    ...
+}
+```
+上面代码使用了 @Autowired 指定对 setAxe() 方法进行自动装配，Spring 将会自动搜索容器中类型为 Axe 的 Bean实例，并将该 Bean 实例作为 setAxe() 方法的参数传入  
+
+如果正好在容器中找到一个类型为 Axe 的 Bean，Spring 就会以该 Bean 为参数执行 setAxe() 方法；  
+
+如果在容器中找到多个类型为 Axe 的 Bean，Spring 会引发异常；  
+
+如果在容器中没有找到多个类型为 Axe 的 Bean，Spring 什么都不执行，也不会引发异常  
+
+Spring 还允许使用 @Autowired 来标注多个参数的普通方法，如：
+```
+@Component
+public class Chinese implements Person{
+    ...
+    //可接受多个参数的普通方法
+    @Autowired
+    public void prepare(Axe axe, Dog dog){
+        this.axe=axe;
+        this.dog=dog;
+    }
+    ...
+}
+```
+当使用 @Autowired 修饰带多个参数的普通方法时，Spring 会自动到容器中寻找类型匹配的 Bean，如果恰好为每个参数都找到一个类型匹配的 Bean，Spring 会自动以这些 Bean 作为参数来调用该方法  
+如，上述 prepare(Axe axe,Dog dog)方法为例，  
+
+Spring 会自动寻找容器中类型为 Axe、Dog 的 Bean，如果在容器中恰好找到一个类型为 Axe 和一个类型为 Dog 的 Bean，Spring 就会以这两个 Bean 作为参数来调用 prepare() 方法  
+
+@Autowired 也可用于修饰构造器和实例变量，如：
+```
+@Autowired
+private Axe axe;
+@Autowired
+public Chinese(Axe axe,Dog dog){
+    this.axe=axe;
+    this.dog=dog;
+}
+```
+当使用 @Autowired 修饰一个实例变量时，Spring 将会把容器中与该实例变量类型匹配的 Bean 设置为该实例变量的值，如，  
+
+程序中使用 @Autowired 标注了 private Axe axe，则 Spring 会自动搜索容器中类型为 Axe 的 Bean。  
+
+如果恰好找到一个该类型的 Bean，Spring 就会将该 Bean 设置成 axe 实例变量的值；  
+
+如果容器中包含多于一个 Axe 实例，则 Spring 容器会抛出 BeanCreateException 异常  
+
+@Autowired 甚至可以用于修饰数组类型的成员变量，如：
+```
+@Component
+public class Chinese implements Person{
+    @Autowired
+    private Axe[] axes;
+}
+```
+此时，被 @Autowired 修饰的 axes 实例变量的类型是 Axe[] 数组，在这种情况下，Spring 会自动搜索容器中所有的 Axe 实例，并以这些 Axe 实例作为数组元素来创建数组，最后将该数组赋给上面 Chinese 实例的 axes 实例变量  
+
+与此类似，@Autowired 也可标注 集合类型 的实例变量，或标注 形参类型 的集合方法，Spring 对这种 集合属性、集合形参的处理与前面对数组类型的处理是完全相同的。如：
+```
+@Component
+public class Chinese implements Person{
+    private Set<Axe> axes;
+    @Autowired
+    public void setAxes(Set<Axe> axes){
+        this.axes=axes;
+    }
+}
+```
+对于这种集合类型的参数而言，程序代码中必须使用泛型，否则 Spring 不知如何转型  
+
+Spring 4.0 增强后的 @Autowired 注解还可以根据泛型进行自动装配  
+
+@Autowired 注解总是采用 byType 的自动装配策略，在这种策略下，符合自动装配类型的候选 Bean 实例常常有多个，这个时候就可能引起异常 ( 对于数组类型参数、集合类型参数则不会 )   
+
+为了实现精确的自动装配，Spring 提供了 @Qualifier 注解，通过使用 @Qualifier，允许根据 Bean 的 id 来执行自动装配   
+
+> 注意  
+使用 @Qualifier 注解的意义并不大，如果程序使用 @Autowired 和 @Qualifier 实现精确的自动装配，还不如直接使用 @Resource 注解执行依赖注入  
+
+
+
+
+
