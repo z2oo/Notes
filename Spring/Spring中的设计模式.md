@@ -58,3 +58,100 @@ Spring 推荐将所有的业务逻辑组件、DAO组件、数据源组件等配�
 而且，如果容器中 Bean 实例具有 singleton 行为特征，则 Spring 容器还会缓存该 Bean实例，从而保证程序通过 Spring 工厂来获取该 Bean 实例时，Spring 工厂将会返回一个 Bean 实例  
 
 ---
+## 工厂方法和抽象工厂
+在简单工厂模式里，系统使用工厂类生产所有产品实例，且该工厂决定生产哪个类的实例，即该共产类负责所有的逻辑判断、实例创建等工作   
+
+如果不想在工厂类中进行逻辑判断，程序可以为不同产品类提供不同的工厂，不同的工厂类生产不同的产品  
+
+例如，例如可以为 Printer、BetterPrinter 分别提供 PrinterFactory 和 BetterPrinterFactory 工厂类，这就无须在工厂类进行复杂的逻辑判断  
+
+
+```
+public interface OutputFactory{
+    //仅定义一个方法用于返回输出设备
+    Output getOutput();
+}
+```
+
+```
+public class PrinterFactory implements OutputFactory{
+    public Output getOutput(){
+        //该工厂只负责产生 Printer 对象
+        return new Printer();
+    }
+}
+```
+
+```
+public class BetterFactory implements OutputFactory{
+    public Output getOutput(){
+        //该工厂只负责产生 BetterFacotory 对象
+        return new BetterFactory();
+    }
+}
+```
+
+![](http://on-img.com/chart_image/5aa4e568e4b0d77c8a82a684.png)  
+
+
+当使用工厂方法设计模式时，对象调用者需要与具体的工厂类耦合：  
+
+当需要不同对象时，程序需要调用响应工厂对象的方法来得到所需的对象  
+
+如下是 Computer 类中创建 Output 对象并调用该对象方法的代码  
+
+```
+public class Computer{
+    private Output out;
+    
+    public Computer(Output out){
+        this.out=out;
+    }
+    
+    //定义一个模拟获取字符串输入的方法
+    public void keyIn(String msg){
+        out.getData(msg);
+    }
+    
+    public static void main(String[] args){
+        //使用 PrinterFactory 子类来创建 OutputFactory
+        OutputFactory of=new PrinterFactory();
+        //将 Output 对象传入，创建 Computer 对象
+        Computer c=new Computer(of.getOutput());
+        c.keyIn("jkl");
+    }
+}
+```
+从上面的代码可以看出，对于采用工厂方法的设计架构，客户端代码成功与被调用对象的实现类分离  
+
+但，带来了另一种耦合：客户端代码与不同的工厂类耦合  
+
+为了解决客户端代码与不同的工厂类耦合的问题，接着考虑再增加一个工厂类，该工厂类不是生产 Output 对象，而是生产 OutputFactory 实例   
+
+简而言之，这个工厂类不制造具体的被调用对象，而是制造不同的工厂对象，这个特殊的工厂类被称呼为抽象工厂类，设计方式为抽象工厂模式  
+
+![](http://on-img.com/chart_image/5aa4ebdbe4b0fb5a6bf0bcca.png)  
+
+
+```
+public class OutputFactoryFactory{
+    //仅定义一个方法用于返回输出设备
+    public static OutputFactory getOutputFactory(String type){
+        if(type.equalsIgnoreCase("better"){
+            return new BetterPrinterFactory();
+        }else{
+            return new PrinterFactory();
+        }
+    }
+}
+```
+可看出，抽象工厂根据 type 参数进行判断，决定生成哪种工厂实例，通过这种设计模式，就可以让客户端程序只需与抽象工厂类耦合  
+
+```
+public class void main(String[] args){
+    //使用 PrinterFactory 子类来创建 OutputFactory
+    OutputFactory of=OutputFactoryFactory.getOutputFactory("better");
+    //调用 OutputFactory 的方法获取 Output对象
+    //并将 Output 对象传入 Computer中
+    Computer c=new Computer(of.getOutput());
+}
