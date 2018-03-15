@@ -91,7 +91,7 @@ public class BetterFactory implements OutputFactory{
 }
 ```
 
-![](http://on-img.com/chart_image/5aa4e568e4b0d77c8a82a684.png)  
+
 
 
 当使用工厂方法设计模式时，对象调用者需要与具体的工厂类耦合：  
