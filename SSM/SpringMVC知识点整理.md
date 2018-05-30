@@ -63,6 +63,12 @@ RequiredAnnotationBeanPostProcessor
 ```
 该配置项其实也包含了自动注入上述 `processor` 的功能，因此当使用了 `<context:component-scan/>`后，就可以将 `<context:annotaion-confg/>` 移除掉  
 
+## 组件启动顺序
+在 Web 容器中，有监听器( Listener )、过滤器( Filter )和 Servlet  
+
+它们的启动顺序是：  
+监听器 > 过滤器 > Servlet  
+
 
 
 
