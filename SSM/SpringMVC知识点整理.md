@@ -67,9 +67,64 @@ RequiredAnnotationBeanPostProcessor
 在 Web 容器中，有监听器( Listener )、过滤器( Filter )和 Servlet  
 
 它们的启动顺序是：  
-监听器 > 过滤器 > Servlet  
+监听器 > 过滤器 > 拦截器 > Servlet  
+
+## 监听器
+### 监听器的划分
+#### 按监听的对象划分
+1. 用于监听应用程序环境对象 (ServletContext) 的事件监听器  
+2. 用于监听用户会话对象 (HttpSession) 的事件监听器
+3. 用于监听请求消息对象 (ServletRequest) 的事件监听器  
+
+#### 按监听的事件划分
+1. 监听域对象自身的创建和销毁的事件监听器  
+2. 监听域对象中的属性的增加和删除的事件监听器
+3. 监听绑定到 HttpSession 域中的某个对象的状态的事件监听器
+
+监听域对象 及 创建和销毁监听器  
+ServletContext —— ServletContextListener  
+HttpSession —— HttpSessionListener  
+ServletRequest —— ServletRequestListener  
 
 
+ServletContextListener 主要用途
+1. 定时器
+2. 全局属性对象
+  
 
+HttpSessionListener 主要用途
+1. 统计在线人数
+2. 记录访问日志
+  
 
+ServletRequestListener 主要用途
+1. 读取参数
+2. 记录访问历史
+  
 
+监听域对象  属性的增加和删除监听器  
+ServletContext —— ServletContextAttributeListener  
+HttpSession —— HttpSessionAttributeListener  
+ServletRequest —— ServletRequestAttributeListener 
+
+当某个类实现了 HttpSessionBindingListener 接口，则只要在 Sesion 域中，当这个对象绑定或解除绑定则会调用相应的方法  
+
+  
+  
+## SpringMVC 的拦截器和过滤器
+### 过滤器：
+依赖于 Servlet 容器，在实现上基于函数回调，可以对几乎所有请求进行过滤，但是缺点是一个过滤器实例只能在容器初始化时调用一次。   
+
+使用过滤器的目的是用来做一些过滤操作，获取我们想要获取的数据，比如：在过滤器中修改字符编码；在过滤器中修改 HttpServletRequest 的一些参数，包括：过滤低俗文字、危险字符等  
+
+### 拦截器：
+依赖于 Web 框架，在 SpringMVC 中就是依赖于 SpringMVC 框架。在实现上基于 Java 的反射机制，属于面向切面编程 (AOP) 的一种运用。  
+
+由于拦截器是基于 Web 框架的调用，因此可以使用 Spring 的依赖注入进行一些业务操作，同时一个拦截器实例在一个 controller 生命周期之内可以多次调用。  
+
+但是缺点是只能对 controller 请求进行拦截，对其他的一些比如直接访问静态资源的请求则没办法进行拦截处理  
+
+---
+
+对于整个 SpringMVC 的执行流程来说，如果加上了拦截器和过滤器，其最终的执行流程如下图：  
+![](http://img4.07net01.com/upload/images/2016/12/07/100928071536053.png)  
