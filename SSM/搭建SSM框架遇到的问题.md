@@ -7,4 +7,4 @@
 为什么呢?
 
 ---
-
+因为配置 DispatcherServlet 其实就是配置 SpringMVC 容器，而 SpringMVC 容器跟 Spring 容器是父子容器关系。父子关系中，子容器可以访问父容器的内容，而父容器没有权利访问子容器的内容。
